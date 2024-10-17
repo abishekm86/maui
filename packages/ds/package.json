@@ -1,7 +1,7 @@
 {
-  "name": "maui-core",
+  "name": "ds",
   "version": "1.0.0",
-  "description": "Maui Core Rendering Engine",
+  "description": "Sample Maui Design System",
   "author": "OCI Console <TODO:Email, Slack>",
   "license": "UNLICENSED",
   "exports": {
@@ -19,6 +19,7 @@
     "test": "jest"
   },
   "peerDependencies": {
+    "@mui/material": "^6.1.3",
     "preact": "^10.0.0"
   },
   "devDependencies": {
@@ -29,6 +30,6 @@
     "tsup": "^8.3.0"
   },
   "dependencies": {
-    "@preact/signals-core": "^1.8.0"
+    "maui-core": "workspace:*"
   }
 }

@@ -17,6 +17,7 @@ yarn-error.log*
 dist/
 build/
 .esbuild/
+.tsup/
 
 # Vite build cache
 .vite/
