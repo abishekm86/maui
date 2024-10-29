@@ -10,11 +10,13 @@ const Blue: Config<Color.v1> = {
   colorText: 'Blue',
 }
 
-const Green: Config<Color.v1> = {
+const Green: Config<Color.v2> = {
   id: 'green',
-  schema: 'color@1',
-  color: '#00ff00',
-  colorText: 'Green',
+  schema: 'color@2',
+  theme: {
+    color: '#00ff00',
+    colorText: 'green',
+  },
 }
 
 const FortyTwo: Config<Size.v1> = {

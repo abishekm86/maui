@@ -14,6 +14,7 @@ export type TemplateFeatures = {
 
 // TODO: automate keeping this file up to date
 import { metadata as colorV1MaterialDetailed } from './templates/color.v1.material.detailed'
+import { metadata as colorV2MaterialDetailed } from './templates/color.v2.material.detailed'
 import { metadata as colorV1MaterialSummary } from './templates/color.v1.material.summary'
 import { metadata as sizeV1MaterialDetailed } from './templates/size.v1.material.detailed'
 import { metadata as infoV1Material } from './templates/info.v1.material'
@@ -21,6 +22,7 @@ import { metadata as infoV1Material } from './templates/info.v1.material'
 
 export const templateMetadataRegistry = createMetadataRegistry([
   colorV1MaterialDetailed,
+  colorV2MaterialDetailed,
   colorV1MaterialSummary,
   sizeV1MaterialDetailed,
   infoV1Material,

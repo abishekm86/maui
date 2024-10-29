@@ -7,7 +7,10 @@ export namespace Color {
   }
 
   export interface v2 extends Schema<'color@2'> {
-    color: string // Color value in RGB or HEX
-    localizedColorText: string // Color description (e.g., "blue")
+    theme?: {
+      color: string
+      colorText: string
+    }
+    heading?: string
   }
 }

@@ -48,7 +48,7 @@ export function withCache<T extends (...args: any[]) => Promise<any>>(
     if (!enableCache) return fn(...args)
 
     // Generate a unique cache key based on arguments
-    const cacheKey = JSON.stringify(args)
+    const cacheKey = JSON.stringify(args) // TODO: allow caller to specify cache key
 
     if (cache.has(cacheKey)) {
       return cache.get(cacheKey) as ReturnType<T>

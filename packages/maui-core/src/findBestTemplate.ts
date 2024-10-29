@@ -4,7 +4,6 @@ import { withCache } from './cache'
 
 // TODO: implement exact match flag
 // TODO: support weighted features
-// TODO: implement LRU cache to cache best template
 async function findBestTemplateInternal<U extends Record<string, string>>(
   templateName: string,
   requestedFeatures: U,

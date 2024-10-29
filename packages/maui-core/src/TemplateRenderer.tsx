@@ -10,6 +10,7 @@ export interface TemplateRendererProps {
   errorFallback?: (error: string) => JSX.Element
 }
 
+// TODO: template lifecycle - active; hidden; suspended - LRU cache
 export function TemplateRenderer({
   config,
   context,
