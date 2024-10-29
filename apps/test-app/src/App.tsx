@@ -29,7 +29,7 @@ export function App() {
             <ErrorBoundary key={currentConfig.id}>
               <TemplateRenderer
                 config={currentConfig}
-                context={{ theme: 'material', density: 'detailed' }}
+                context={{ theme: 'material', density: 'summary' }}
               />
             </ErrorBoundary>
           )}

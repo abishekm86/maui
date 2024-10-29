@@ -1,10 +1,11 @@
 import { JSX } from 'preact'
 import { templateRegistry, TemplateEntry, resolveTemplate, searchMatrix } from './registry'
+import { withCache } from './cache'
 
 // TODO: implement exact match flag
 // TODO: support weighted features
 // TODO: implement LRU cache to cache best template
-export async function findBestTemplate<U extends Record<string, string>>(
+async function findBestTemplateInternal<U extends Record<string, string>>(
   templateName: string,
   requestedFeatures: U,
 ): Promise<JSX.ElementType | undefined> {
@@ -76,3 +77,5 @@ function calculatePenalty(
 
   return totalPenalty
 }
+
+export const findBestTemplate = withCache(findBestTemplateInternal, { cacheLimit: 50 })
