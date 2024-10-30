@@ -1,18 +1,11 @@
-import { BaseTemplate, BaseTemplateMetadata } from './types'
-
-export type TemplateModule = { template?: BaseTemplate }
-
-export type TemplateEntry = BaseTemplateMetadata & {
-  templatePromise?: Promise<TemplateModule>
-}
-
-export type TemplateMetadataRegistry = Record<string, BaseTemplateMetadata>
-
-export type TemplateRegistry = TemplateEntry[]
-
-export const templateRegistry: TemplateRegistry = []
-
-export const searchMatrix = new Map<string, string[]>()
+import {
+  BaseTemplateMetadata,
+  searchMatrix,
+  TemplateEntry,
+  TemplateMetadataRegistry,
+  TemplateModule,
+  templateRegistry,
+} from './types'
 
 export function createMetadataRegistry(metadataArray: BaseTemplateMetadata[]) {
   const metadataRegistry: Record<string, BaseTemplateMetadata> = {}
@@ -36,7 +29,7 @@ function registerTemplate(
   templateMetadata: BaseTemplateMetadata,
   templateModule: Promise<unknown>,
 ) {
-  const templateEntry: TemplateEntry = { ...templateMetadata }
+  const templateEntry: TemplateEntry = { metadata: templateMetadata }
   templateEntry.templatePromise = templateModule as Promise<TemplateModule> // optimistically assign, but validate when resolving
   templateRegistry.push(templateEntry)
 }
@@ -60,6 +53,16 @@ export function registerTemplates(
   }
 }
 
-export async function resolveTemplate(templateEntry: TemplateEntry) {
-  return (await templateEntry?.templatePromise)?.template
+export async function resolveTemplate(
+  templateEntry: TemplateEntry,
+): Promise<TemplateModule | undefined> {
+  if (!templateEntry) return undefined
+
+  const module = await templateEntry.templatePromise
+  if (!module) return undefined
+
+  return {
+    template: module.template,
+    metadata: templateEntry.metadata,
+  }
 }

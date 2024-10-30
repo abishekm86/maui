@@ -35,27 +35,31 @@ class LRUCache<K, V> {
 interface CacheOptions {
   cacheLimit?: number
   enableCache?: boolean
+  getKey?: (...args: any[]) => string
 }
 
-export function withCache<T extends (...args: any[]) => Promise<any>>(
+export function withCache<T extends (...args: any[]) => any>(
   fn: T,
-  { cacheLimit = 10, enableCache = true }: CacheOptions = {},
+  {
+    cacheLimit = 10,
+    enableCache = true,
+    getKey = (...args: any[]) => JSON.stringify(args),
+  }: CacheOptions = {},
 ): T {
   const cache = new LRUCache<string, ReturnType<T>>({ max: cacheLimit })
 
-  return (async (...args: Parameters<T>): Promise<ReturnType<T>> => {
+  return function (...args: Parameters<T>): ReturnType<T> {
     // Bypass cache if caching is disabled
     if (!enableCache) return fn(...args)
 
     // Generate a unique cache key based on arguments
-    const cacheKey = JSON.stringify(args) // TODO: allow caller to specify cache key
-
+    const cacheKey = getKey(args)
     if (cache.has(cacheKey)) {
       return cache.get(cacheKey) as ReturnType<T>
     }
 
-    const result = await fn(...args)
+    const result = fn(...args)
     cache.set(cacheKey, result)
     return result
-  }) as T
+  } as T
 }

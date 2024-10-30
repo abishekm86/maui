@@ -1,6 +1,6 @@
 import { Typography } from '@mui/material'
 import { Color } from 'src/schemas'
-import { Template, TemplateMetadata, Defaults, withDefaults } from 'maui-core'
+import { Template, TemplateMetadata } from 'maui-core'
 import { TemplateFeatures } from 'src'
 
 export const metadata: TemplateMetadata<Color.v2, TemplateFeatures> = {
@@ -10,25 +10,23 @@ export const metadata: TemplateMetadata<Color.v2, TemplateFeatures> = {
     density: 'detailed',
   },
   id: 'color.v2.material.detailed',
-}
-
-const defaults: Defaults<Color.v2> = {
-  theme: {
-    color: '#666666',
-    colorText: 'grey',
+  defaults: {
+    theme: {
+      color: '#666666',
+      colorText: 'grey',
+    },
+    heading: 'color',
   },
-  heading: 'color',
 }
 
-export const template: Template<Color.v2> = withDefaults(defaults, config => {
-  const { theme, heading } = config
+export const template: Template<Color.v2> = function ({ theme, heading }) {
   const { color, colorText } = theme
   return (
     <Typography variant="h4">
-      {`${heading}: `}
-      <span style={{ color }}>
-        <b>{colorText}</b>
+      {`${heading.value}: `}
+      <span style={{ color: color.value }}>
+        <b>{colorText.value}</b>
       </span>
     </Typography>
   )
-})
+}

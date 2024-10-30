@@ -10,8 +10,9 @@ export const metadata: TemplateMetadata<Color.v1, TemplateFeatures> = {
     density: 'summary',
   },
   id: 'color.v1.material.summary',
+  defaults: {},
 }
 
 export const template: Template<Color.v1> = function ({ color }) {
-  return <Box style={{ backgroundColor: color, padding: '24px' }} />
+  return <Box style={{ backgroundColor: color.value, padding: '24px' }} />
 }

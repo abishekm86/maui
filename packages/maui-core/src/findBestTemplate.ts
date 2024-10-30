@@ -1,20 +1,24 @@
-import { JSX } from 'preact'
-import { templateRegistry, TemplateEntry, resolveTemplate, searchMatrix } from './registry'
+import { templateRegistry, TemplateEntry, searchMatrix, TemplateModule } from './types'
 import { withCache } from './cache'
+import { resolveTemplate } from './registry'
+
+export const findBestTemplate = withCache(findBestTemplateInternal, { cacheLimit: 50 })
 
 // TODO: implement exact match flag
 // TODO: support weighted features
 async function findBestTemplateInternal<U extends Record<string, string>>(
   templateName: string,
   requestedFeatures: U,
-): Promise<JSX.ElementType | undefined> {
-  const matchingTemplates = templateRegistry.filter(template => template.schema === templateName)
+): Promise<TemplateModule | undefined> {
+  const matchingTemplates = templateRegistry.filter(
+    template => template.metadata.schema === templateName,
+  )
 
   let bestTemplates: TemplateEntry[] = []
   let lowestPenalty = Infinity
 
   for (const template of matchingTemplates) {
-    const penalty = calculatePenalty(requestedFeatures, template.features, searchMatrix)
+    const penalty = calculatePenalty(requestedFeatures, template.metadata.features, searchMatrix)
     if (penalty < lowestPenalty) {
       lowestPenalty = penalty
       bestTemplates = [template]
@@ -22,6 +26,7 @@ async function findBestTemplateInternal<U extends Record<string, string>>(
       bestTemplates.push(template)
     }
   }
+
   if (bestTemplates.length === 0) {
     return matchingTemplates.length > 0
       ? await resolveTemplate(matchingTemplates[0]) // TODO: return most generic template instead
@@ -76,5 +81,3 @@ function calculatePenalty(
 
   return totalPenalty
 }
-
-export const findBestTemplate = withCache(findBestTemplateInternal, { cacheLimit: 50 })

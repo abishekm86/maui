@@ -10,12 +10,13 @@ export const metadata: TemplateMetadata<Size.v1, TemplateFeatures> = {
     density: 'detailed',
   },
   id: 'size.v1.material.detailed',
+  defaults: {},
 }
 
 export const template: Template<Size.v1> = function ({ size }) {
   return (
     <Typography variant="h4">
-      <b>{size}</b>
+      <b>{size.value}</b>
     </Typography>
   )
 }

@@ -1,7 +1,8 @@
 import { JSX } from 'preact/jsx-runtime'
 import { useState, useMemo } from 'preact/hooks'
 import { findBestTemplate } from './findBestTemplate'
-import { BaseConfig } from './types'
+import { BaseConfig, TemplateModule } from './types'
+import { processConfig } from './processConfig'
 
 export interface TemplateRendererProps {
   config: BaseConfig
@@ -14,10 +15,10 @@ export interface TemplateRendererProps {
 export function TemplateRenderer({
   config,
   context,
-  loadingFallback = config => <div>Loading template for {config}...</div>, // Default loading fallback
-  errorFallback = error => <div>Render Error: {error}</div>, // Default error handler
+  loadingFallback = config => <div>Loading template for {config}...</div>,
+  errorFallback = error => <div>Render Error: {error}</div>,
 }: TemplateRendererProps) {
-  const [SelectedTemplate, setSelectedTemplate] = useState<JSX.ElementType | null>(null)
+  const [templateModule, setTemplateModule] = useState<TemplateModule | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useMemo(() => {
@@ -27,11 +28,12 @@ export function TemplateRenderer({
     }
 
     findBestTemplate(config.schema, context)
-      .then(template => {
-        if (!template) {
+      .then(module => {
+        if (!module || !module.template || !module.metadata) {
           throw new Error(`No suitable template found`)
         }
-        setSelectedTemplate(() => template as unknown as JSX.ElementType)
+
+        setTemplateModule({ template: module.template, metadata: module.metadata })
       })
       .catch(err => {
         setError(`Failed to load template for ${config.schema}: ${err.message}`)
@@ -42,9 +44,13 @@ export function TemplateRenderer({
     return errorFallback(error)
   }
 
-  if (!SelectedTemplate) {
+  if (!templateModule) {
     return loadingFallback(config.schema)
   }
 
-  return <SelectedTemplate {...config} />
+  const { template, metadata } = templateModule
+
+  const processedConfig = processConfig(config, metadata!.defaults)
+
+  return template!(processedConfig)
 }
