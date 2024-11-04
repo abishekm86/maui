@@ -1,6 +1,5 @@
 import { templateRegistry, TemplateEntry, searchMatrix, TemplateModule } from './types'
 import { withCache } from './cache'
-import { resolveTemplate } from './registry'
 
 export const findBestTemplate = withCache(findBestTemplateInternal, { cacheLimit: 50 })
 
@@ -80,4 +79,16 @@ function calculatePenalty(
   }
 
   return totalPenalty
+}
+
+async function resolveTemplate(templateEntry: TemplateEntry): Promise<TemplateModule | undefined> {
+  if (!templateEntry) return undefined
+
+  const module = await templateEntry.templatePromise
+  if (!module) return undefined
+
+  return {
+    template: module.template,
+    metadata: templateEntry.metadata,
+  }
 }

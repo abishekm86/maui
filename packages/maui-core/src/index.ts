@@ -1,3 +1,5 @@
+export type { Schema, Config, TemplateMetadata, Template, BaseConfig, Value, Async } from './types'
 export * from './TemplateRenderer'
-export type { Schema, Config, TemplateMetadata, Template, BaseConfig, Value } from './types'
-export { createMetadataRegistry, registerTemplates, registerSearchMatrix } from './registry'
+export * from './utils'
+export * from './registry'
+export * from './filaments'

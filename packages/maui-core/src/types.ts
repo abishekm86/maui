@@ -14,7 +14,6 @@ export type TemplateMetadata<T extends Schema<string>, U extends Record<string, 
   id: string
   schema: T['schema']
   features: U
-  defaults: Defaults<T>
 }
 
 export type Template<T extends Schema<string>> = (props: ProcessedConfig<T>) => VNode
@@ -42,47 +41,53 @@ export const templateRegistry: TemplateRegistry = []
 export const searchMatrix = new Map<string, string[]>()
 
 // Config value types
-export type Value<T> = T | (() => T) | Signal<T>
+type Fn<T> = () => T
+
+type Primitive = string | number | boolean | bigint | symbol
+
+export type Value<T> = T extends Primitive ? T | Fn<T> | Signal<T> : Fn<T> | Signal<T>
+
+export interface Async<T> {
+  loading: boolean
+  refreshing: boolean
+  value?: T
+  error: Error | null | undefined
+}
 
 // Helper types for processed configs
 // TODO: handle array values
-// TODO: testing
-type IsPrimitive<T> = T extends string | number | boolean | bigint | symbol | null | undefined
-  ? true
-  : false
 
-type Transform<T> = [T] extends [never]
-  ? never
-  : T extends (...args: any[]) => infer U
-    ? { value: U }
-    : T extends Signal<infer U>
-      ? { value: U }
-      : IsPrimitive<T> extends true
-        ? { value: T }
-        : T extends object
-          ? ProcessedConfig<T>
-          : { value: T }
+/* Test cases:
+type Config<T> = {
+  a?: T
+  b: T
+  c?: { d?: T, e: T }
+  f: { g?: T, h: T }
+}
+
+ProcessedConfig<string> should be { a?: Signal<string>, ... }
+ProcessedConfig<Value<string>> should be { a?: Signal<string>, ... }
+ProcessedConfig<Async<string>> should be { a?: { loading: Signal<boolean>, ... }, ... }
+ProcessedConfig<Value<Async<string>>> should be { a?: Signal<Async<string>>, ... }
+*/
+type IsValue<T> = [T] extends [Value<infer _U>] ? true : false
 
 export type ProcessedConfig<T> = {
-  [K in keyof T]-?: Transform<Exclude<T[K], undefined>>
+  [K in keyof T]: IsValue<Exclude<T[K], undefined>> extends true
+    ? Exclude<T[K], undefined> extends Value<infer U>
+      ? Signal<Exclude<U, undefined | Fn<U> | Signal<U>>>
+      : never
+    : Exclude<T[K], undefined> extends object
+      ? ProcessedConfig<T[K]>
+      : Signal<Exclude<T[K], undefined>>
 }
 
-// Helper types for template defaults
-// TODO: handle array values
-// TODO: testing
-type OptionalKeys<T> = {
-  [K in keyof T]-?: undefined extends T[K] ? K : never
-}[keyof T]
-
-type Requireds<T> = {
-  [K in keyof T]-?: T[K] extends object ? Defaults<T[K]> : never
-}
-
-type OmitNever<T> = {
-  [K in keyof T as T[K] extends never ? never : K]: T[K]
-}
-
-export type DeepRequired<T> = T extends object ? { [K in keyof T]-?: DeepRequired<T[K]> } : T
-
-export type Defaults<T extends object> = DeepRequired<Pick<T, OptionalKeys<T>>> &
-  OmitNever<Requireds<T>>
+// TODO: check for correctness and replace ProcessedConfig with this:
+// type Required<T> = Exclude<T, undefined>
+// export type SimplifiedProcessedConfig<T> = {
+//   [K in keyof T]: [Required<T[K]>] extends [Value<infer U>]
+//     ? Signal<Exclude<Required<U>, Fn<U> | Signal<U>>>
+//     : Required<T[K]> extends object
+//       ? SimplifiedProcessedConfig<T[K]>
+//       : Signal<Required<T[K]>>
+// }

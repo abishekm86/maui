@@ -10,14 +10,13 @@ export const metadata: TemplateMetadata<Color.v1, TemplateFeatures> = {
     density: 'detailed',
   },
   id: 'color.v1.material.detailed',
-  defaults: {},
 }
 
 export const template: Template<Color.v1> = function ({ color, colorText }) {
   return (
     <Typography variant="h4">
       <b>
-        <span style={{ color: color.value }}> {colorText.value}</span>
+        <span style={{ color: color.value }}>{colorText.value}</span>
       </b>
     </Typography>
   )

@@ -10,20 +10,13 @@ export const metadata: TemplateMetadata<Color.v2, TemplateFeatures> = {
     density: 'detailed',
   },
   id: 'color.v2.material.detailed',
-  defaults: {
-    theme: {
-      color: '#666666',
-      colorText: 'grey',
-    },
-    heading: 'color',
-  },
 }
 
-export const template: Template<Color.v2> = function ({ theme, heading }) {
-  const { color, colorText } = theme
+export const template: Template<Color.v2> = function (config) {
+  const { color = { value: '#666666' }, colorText = { value: 'grey' } } = config.theme ?? {}
   return (
     <Typography variant="h4">
-      {`${heading.value}: `}
+      {`${config.heading ?? 'color'}: `}
       <span style={{ color: color.value }}>
         <b>{colorText.value}</b>
       </span>

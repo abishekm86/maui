@@ -1,7 +1,7 @@
-import { Schema, Value } from 'maui-core'
+import { Async, Schema, Value } from 'maui-core'
 
 export namespace Size {
   export interface v1 extends Schema<'size@1'> {
-    size: Value<number>
+    size: Value<Async<number>>
   }
 }

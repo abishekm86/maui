@@ -10,7 +10,6 @@ export const metadata: TemplateMetadata<Color.v1, TemplateFeatures> = {
     density: 'summary',
   },
   id: 'color.v1.material.summary',
-  defaults: {},
 }
 
 export const template: Template<Color.v1> = function ({ color }) {

@@ -9,7 +9,6 @@ export const metadata: TemplateMetadata<Info.v1, TemplateFeatures> = {
     theme: 'material',
   },
   id: 'info.v1.material',
-  defaults: {},
 }
 
 export const template: Template<Info.v1> = function ({ message }) {

@@ -52,17 +52,3 @@ export function registerTemplates(
     }
   }
 }
-
-export async function resolveTemplate(
-  templateEntry: TemplateEntry,
-): Promise<TemplateModule | undefined> {
-  if (!templateEntry) return undefined
-
-  const module = await templateEntry.templatePromise
-  if (!module) return undefined
-
-  return {
-    template: module.template,
-    metadata: templateEntry.metadata,
-  }
-}
