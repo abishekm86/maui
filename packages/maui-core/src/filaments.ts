@@ -1,12 +1,12 @@
-import { Signal, signal, effect } from '@preact/signals'
+import { Signal, signal, effect, computed } from '@preact/signals'
 import { Async } from './types'
 import { defaultAsync } from './utils'
 
 type ComputeFunction<I, O> = (input: I, abortSignal?: AbortSignal) => Promise<O>
 
-export function asyncComputed<I, O>(
+export function asyncEffect<I, O>(
   inputSignal: Signal<I>,
-  computeFn: ComputeFunction<I, O>,
+  fn: ComputeFunction<I, O>,
 ): Signal<Async<O>> {
   const outputSignal = signal<Async<O>>(defaultAsync())
 
@@ -30,7 +30,7 @@ export function asyncComputed<I, O>(
 
     const compute = async () => {
       try {
-        const result = await computeFn(inputValue, abortController!.signal)
+        const result = await fn(inputValue, abortController!.signal)
 
         if (currentId === computationId) {
           outputSignal.value = {
@@ -56,4 +56,23 @@ export function asyncComputed<I, O>(
   })
 
   return outputSignal
+}
+
+type ConditionFunction<T> = (value: T) => boolean
+
+export function conditionalComputed<T>(
+  inputSignal: Signal<T>,
+  condition: ConditionFunction<T>,
+): Signal<T> {
+  // Start with the initial value, assuming it satisfies the condition
+  const cachedSignal = signal<T>(inputSignal.value)
+
+  // Create a computed signal that only updates when the condition is met
+  return computed(() => {
+    const currentValue = inputSignal.value
+    if (condition(currentValue)) {
+      cachedSignal.value = currentValue
+    }
+    return cachedSignal.value
+  })
 }

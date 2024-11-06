@@ -10,17 +10,22 @@ export type Config<T extends Schema<string>> = T & {
   schema: T['schema']
 }
 
-export type TemplateMetadata<T extends Schema<string>, U extends Record<string, string>> = {
+export type TemplateMetadata<
+  Features extends Record<string, string>,
+  Input extends Schema<string>,
+  Output extends Schema<Input['schema']> = Input,
+> = {
   id: string
-  schema: T['schema']
-  features: U
+  schema: Input['schema']
+  features: Features
+  transform?: <T extends Input = Input>(config: T) => Output
 }
 
 export type Template<T extends Schema<string>> = (props: ProcessedConfig<T>) => VNode
 
 export type BaseConfig = Config<Schema<string>>
 
-export type BaseTemplateMetadata = TemplateMetadata<Schema<string>, Record<string, string>>
+export type BaseTemplateMetadata = TemplateMetadata<Record<string, string>, Schema<string>>
 
 export type BaseTemplate = Template<Schema<string>>
 

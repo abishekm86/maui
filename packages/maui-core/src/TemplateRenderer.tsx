@@ -48,8 +48,8 @@ export function TemplateRenderer({
     return loadingFallback(config.schema)
   }
 
-  const { template } = templateModule
-  const processedConfig = processConfig(config)
+  const { template, metadata } = templateModule
+  const processedConfig = processConfig(config, metadata?.transform)
 
   // TODO: pass in requested features to let template adjust dynamically
   return template!(processedConfig)

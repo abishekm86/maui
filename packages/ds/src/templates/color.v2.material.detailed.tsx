@@ -1,22 +1,36 @@
 import { Typography } from '@mui/material'
 import { Color } from 'src/schemas'
-import { Template, TemplateMetadata } from 'maui-core'
-import { TemplateFeatures } from 'src'
+import { Schema, Template, Value } from 'maui-core'
+import { Metadata } from 'src'
 
-export const metadata: TemplateMetadata<Color.v2, TemplateFeatures> = {
+interface TemplateProps extends Schema<'color@2'> {
+  color: Value<string>
+  colorText: Value<string>
+  heading: Value<string>
+}
+
+export const metadata: Metadata<Color.v2, TemplateProps> = {
   schema: 'color@2',
   features: {
     theme: 'material',
     density: 'detailed',
   },
   id: 'color.v2.material.detailed',
+  transform: config => {
+    return {
+      schema: 'color@2',
+      color: config.theme?.color ?? '#6666',
+      colorText: config.theme?.colorText ?? 'grey',
+      heading: config.heading ?? 'colour',
+    }
+  },
 }
 
-export const template: Template<Color.v2> = function (config) {
-  const { color = { value: '#666666' }, colorText = { value: 'grey' } } = config.theme ?? {}
+export const template: Template<TemplateProps> = function (props) {
+  const { color, colorText, heading } = props
   return (
     <Typography variant="h4">
-      {`${config.heading ?? 'color'}: `}
+      {`${heading}: `}
       <span style={{ color: color.value }}>
         <b>{colorText.value}</b>
       </span>

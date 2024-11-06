@@ -1,15 +1,20 @@
 import { computed, signal, Signal } from '@preact/signals'
-import { ProcessedConfig } from './types'
+// import { ProcessedConfig } from './types'
 import { withCache } from './cache'
+import { ProcessedConfig, Schema } from './types'
 
 export const processConfig = withCache(processConfigInternal, {
   cacheLimit: 50,
   getKey: ([config]) => config.id,
 })
 
-function processConfigInternal<T extends object>(config: T): ProcessedConfig<T> {
+function processConfigInternal<T extends Schema<string>, P extends Schema<T['schema']>>(
+  config: T,
+  transformFn?: (config: T) => any,
+): ProcessedConfig<P> {
   const evaluatedConfig = evaluateExpressionsToSignals(config)
-  return evaluatedConfig as ProcessedConfig<T>
+  const transformedConfig = transformFn ? transformFn(evaluatedConfig) : evaluatedConfig
+  return transformedConfig
 }
 
 function evaluateExpressionsToSignals(configValue: any): any {

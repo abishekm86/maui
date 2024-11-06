@@ -1,29 +1,31 @@
 import { Color, Size } from 'ds'
-import { Config, asyncComputed, defaultAsync } from 'maui-core'
+import { Config, asyncEffect, conditionalComputed, defaultAsync } from 'maui-core'
 import { signal } from '@preact/signals'
 
 const num = signal(1)
 
-const square = asyncComputed(num, n => {
+const square = asyncEffect(num, n => {
   return new Promise<number>(resolve => {
     setTimeout(() => {
-      console.log('Processing')
       resolve(n ** 2)
-    }, 1000)
+    }, 500)
   })
 })
 
-const double = asyncComputed(num, n => {
+const filter = conditionalComputed(num, n => n % 2 === 0)
+
+const double = asyncEffect(filter, n => {
   return new Promise<number>(resolve => {
     setTimeout(() => {
       resolve(n * 2)
-    }, 1000)
+    }, 500)
   })
 })
 
+// TODO: suspendable trigger
 setInterval(() => {
   num.value++
-}, 2000)
+}, 1000)
 
 // TODO: enforce build time check to prevent duplicate config ids
 const Blue: Config<Color.v1> = {
@@ -40,6 +42,16 @@ const Green: Config<Color.v2> = {
     color: '#33aa33',
     colorText: () => 'green',
   },
+}
+
+const Red: Config<Color.v2> = {
+  id: 'red',
+  schema: 'color@2',
+  theme: {
+    color: '#aa3333',
+    colorText: () => 'red',
+  },
+  heading: () => 'my color',
 }
 
 const FortyTwo: Config<Size.v1> = {
@@ -66,4 +78,4 @@ const Squares: Config<Size.v1> = {
   size: square,
 }
 
-export const configList = [Blue, Green, FortyTwo, Numbers, Doubles, Squares]
+export const configList = [Blue, Green, Red, FortyTwo, Numbers, Doubles, Squares]

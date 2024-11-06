@@ -5,6 +5,7 @@ export const findBestTemplate = withCache(findBestTemplateInternal, { cacheLimit
 
 // TODO: implement exact match flag
 // TODO: support weighted features
+// TODO: support array of supported features in metadata
 async function findBestTemplateInternal<U extends Record<string, string>>(
   templateName: string,
   requestedFeatures: U,

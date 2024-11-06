@@ -1,9 +1,9 @@
 import { Typography } from '@mui/material'
 import { Color } from 'src/schemas'
-import { Template, TemplateMetadata } from 'maui-core'
-import { TemplateFeatures } from 'src'
+import { Template } from 'maui-core'
+import { Metadata } from 'src'
 
-export const metadata: TemplateMetadata<Color.v1, TemplateFeatures> = {
+export const metadata: Metadata<Color.v1> = {
   schema: 'color@1',
   features: {
     theme: 'material',

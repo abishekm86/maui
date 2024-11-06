@@ -11,6 +11,6 @@ export namespace Color {
       color: Value<string>
       colorText: Value<string>
     }
-    heading?: string
+    heading?: Value<string>
   }
 }
