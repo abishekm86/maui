@@ -1,8 +1,8 @@
 // Nav.tsx
-import { BaseConfig } from 'maui-core'
+import { ConfigRegistry } from 'maui-core'
 
 interface NavProps {
-  configRegistry: Record<string, Omit<BaseConfig, 'id'>>
+  configRegistry: ConfigRegistry
   pinnedConfigId: string | null
   setSelectedConfigId: (id: string | null) => void
   setPinnedConfigId: (id: string | null) => void

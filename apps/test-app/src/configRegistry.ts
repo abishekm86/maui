@@ -1,5 +1,5 @@
 import { Color, Size } from 'ds'
-import { BaseConfig, Config, asyncEffect, conditionalComputed, defaultAsync } from 'maui-core'
+import { Config, asyncEffect, conditionalComputed, defaultAsync, ConfigRegistry } from 'maui-core'
 import { effect, signal } from '@preact/signals'
 
 // TODO: enforce build time check to prevent duplicate config ids
@@ -97,7 +97,7 @@ const Squares: Config<Size.v1> = {
   },
 }
 
-export const configRegistry: Record<string, BaseConfig> = {
+export const configRegistry: ConfigRegistry = {
   blue: Blue,
   green: Green,
   red: Red,

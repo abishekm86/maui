@@ -1,7 +1,7 @@
 import { Typography } from '@mui/material'
 import { Size } from 'src/schemas'
 import { Template } from 'maui-core'
-import { Metadata } from 'src'
+import { Metadata } from 'src/types'
 
 export const metadata: Metadata<Size.v1> = {
   schema: 'size@1',
@@ -9,7 +9,6 @@ export const metadata: Metadata<Size.v1> = {
     theme: 'material',
     density: 'detailed',
   },
-  id: 'size.v1.material.detailed',
 }
 
 // @ts-ignore
@@ -38,7 +37,7 @@ export const template: Template<Size.v1> = function ({ size }) {
       <Typography variant="h6">Hello world.. this shouldn't rerender</Typography>
       {/* Passing a signal directly  instead of its value optimizes rendering */}
       <CustomComponent size={size} />
-      <Typography variant="h6"> And neither should this...</Typography>
+      <Typography variant="h6">And neither should this...</Typography>
     </>
   )
 }

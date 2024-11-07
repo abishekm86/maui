@@ -14,8 +14,8 @@ async function initTemplates() {
   )
 
   const modules = import.meta.glob('/node_modules/ds/dist/templates/**/!(index).js')
-  registerTemplates(templateMetadataRegistry, templateMetadata => {
-    const templateModuleFn = modules[`/node_modules/ds/dist/templates/${templateMetadata.id}.js`]
+  registerTemplates(templateMetadataRegistry, id => {
+    const templateModuleFn = modules[`/node_modules/ds/dist/templates/${id}.js`]
     return templateModuleFn && templateModuleFn()
   })
 }

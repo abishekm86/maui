@@ -1,7 +1,7 @@
 import { Typography } from '@mui/material'
 import { Color } from 'src/schemas'
 import { Schema, Template, Value } from 'maui-core'
-import { Metadata } from 'src'
+import { Metadata } from 'src/types'
 
 interface TemplateProps extends Schema<'color@2'> {
   color: Value<string>
@@ -15,7 +15,6 @@ export const metadata: Metadata<Color.v2, TemplateProps> = {
     theme: 'material',
     density: 'detailed',
   },
-  id: 'color.v2.material.detailed',
   transform: config => {
     return {
       schema: 'color@2',

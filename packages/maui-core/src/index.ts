@@ -1,4 +1,13 @@
-export type { Schema, Config, TemplateMetadata, Template, BaseConfig, Value, Async } from './types'
+export type {
+  Schema,
+  Config,
+  TemplateMetadata,
+  Template,
+  ConfigRegistry,
+  TemplateMetadataRegistry,
+  Value,
+  Async,
+} from './types'
 export * from './TemplateRenderer'
 export * from './utils'
 export * from './registry'

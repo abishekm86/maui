@@ -7,18 +7,6 @@ import {
   templateRegistry,
 } from './types'
 
-export function createMetadataRegistry(metadataArray: BaseTemplateMetadata[]) {
-  const metadataRegistry: Record<string, BaseTemplateMetadata> = {}
-  for (const metadata of metadataArray) {
-    if (metadata.id in metadataRegistry) {
-      console.error(`Duplicate template id found during registration: ${metadata.id}. Skipping...`)
-    } else {
-      metadataRegistry[metadata.id] = metadata
-    }
-  }
-  return metadataRegistry
-}
-
 export function registerSearchMatrix(newEntries: Map<string, string[]>) {
   newEntries.forEach((value, key) => {
     searchMatrix.set(key, value)
@@ -36,16 +24,12 @@ function registerTemplate(
 
 export function registerTemplates(
   templateMetadataRegistry: TemplateMetadataRegistry,
-  getTemplateModulePromise: (templateMetadata: BaseTemplateMetadata) => Promise<unknown>,
+  getTemplateModulePromise: (templateMetadataId: string) => Promise<unknown>,
 ) {
   for (const id in templateMetadataRegistry) {
     const templateMetadata = templateMetadataRegistry[id]
-    if (templateMetadata.id !== id) {
-      console.error(`Malformed template metadata: ${templateMetadata.id}. Skipping...`)
-      continue
-    }
     try {
-      const templateModule = getTemplateModulePromise(templateMetadata)
+      const templateModule = getTemplateModulePromise(id)
       registerTemplate(templateMetadata, templateModule)
     } catch (error) {
       console.error(`Unable to load template: ${id}. Skipping...`)

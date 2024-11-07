@@ -15,7 +15,6 @@ export type TemplateMetadata<
   Input extends Schema<string>,
   Output extends Schema<Input['schema']> = Input,
 > = {
-  id: string
   schema: Input['schema']
   features: Features
   transform?: <T extends Input = Input>(config: T) => Output
@@ -36,6 +35,8 @@ export type TemplateEntry = {
   metadata: BaseTemplateMetadata
   templatePromise?: Promise<TemplateModule>
 }
+
+export type ConfigRegistry = Record<string, BaseConfig>
 
 export type TemplateMetadataRegistry = Record<string, BaseTemplateMetadata>
 
