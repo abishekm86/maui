@@ -2,7 +2,6 @@ import { Color, Size } from 'ds'
 import { Config, asyncEffect, conditionalComputed, defaultAsync, ConfigRegistry } from 'maui-core'
 import { effect, signal } from '@preact/signals'
 
-// TODO: enforce build time check to prevent duplicate config ids
 const Blue: Config<Color.v1> = {
   schema: 'color@1',
   configFn: () => ({

@@ -21,7 +21,6 @@ export default defineConfig({
     try {
       // Run the CommonJS script with Node.js
       execSync('node ./scripts/validate-schemas.js', { stdio: 'inherit' })
-      // TODO: add validate duplicate template id & id matching filename
     } catch (error) {
       console.error('Error during validation:', error)
       process.exit(1) // Exit with error code if validation fails

@@ -10,6 +10,7 @@
     "clean": "git clean -Xdf",
     "build": "turbo run build",
     "preview": "turbo run preview --filter=./apps/test-app",
+    "analyze": "turbo run analyze --filter=./apps/test-app",
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "format": "turbo run format",

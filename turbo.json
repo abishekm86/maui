@@ -9,6 +9,11 @@
       "dependsOn": ["build"],
       "persistent": true
     },
+    "analyze": {
+      "dependsOn": ["build"],
+      "persistent": false,
+      "cache": false
+    },
     "test": {
       "dependsOn": ["build"]
     },
