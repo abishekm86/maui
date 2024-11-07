@@ -1,37 +1,43 @@
+// Nav.tsx
 import { BaseConfig } from 'maui-core'
 
 interface NavProps {
-  configList: BaseConfig[]
-  pinnedConfig: BaseConfig | null
-  setSelectedConfig: (config: BaseConfig | null) => void
-  setPinnedConfig: (config: BaseConfig | null) => void
+  configRegistry: Record<string, Omit<BaseConfig, 'id'>>
+  pinnedConfigId: string | null
+  setSelectedConfigId: (id: string | null) => void
+  setPinnedConfigId: (id: string | null) => void
 }
 
-export function Nav({ configList, pinnedConfig, setSelectedConfig, setPinnedConfig }: NavProps) {
-  const handleConfigHover = (config: BaseConfig) => {
-    if (!pinnedConfig) {
-      setSelectedConfig(config)
+export function Nav({
+  configRegistry,
+  pinnedConfigId,
+  setSelectedConfigId,
+  setPinnedConfigId,
+}: NavProps) {
+  const handleConfigHover = (id: string) => {
+    if (!pinnedConfigId) {
+      setSelectedConfigId(id)
     }
   }
 
-  const handleConfigClick = (config: BaseConfig) => {
-    if (pinnedConfig?.id === config.id) {
-      setPinnedConfig(null)
+  const handleConfigClick = (id: string) => {
+    if (pinnedConfigId === id) {
+      setPinnedConfigId(null)
     } else {
-      setPinnedConfig(config)
+      setPinnedConfigId(id)
     }
   }
 
   return (
     <ul>
-      {configList.map(config => (
+      {Object.entries(configRegistry).map(([id]) => (
         <li
-          key={config.id}
-          onMouseEnter={() => handleConfigHover(config)}
-          onClick={() => handleConfigClick(config)}
-          className={pinnedConfig?.id === config.id ? 'pinned' : ''}
+          key={id}
+          onMouseEnter={() => handleConfigHover(id)}
+          onClick={() => handleConfigClick(id)}
+          className={pinnedConfigId === id ? 'pinned' : ''}
         >
-          {config.id}
+          {id}
         </li>
       ))}
     </ul>

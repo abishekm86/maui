@@ -5,9 +5,9 @@ export type Schema<T extends string> = {
   schema: T
 }
 
-export type Config<T extends Schema<string>> = T & {
-  id: string
+export type Config<T extends Schema<string>> = {
   schema: T['schema']
+  configFn: () => Omit<T, 'schema'>
 }
 
 export type TemplateMetadata<

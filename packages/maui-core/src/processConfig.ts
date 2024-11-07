@@ -5,14 +5,15 @@ import { ProcessedConfig, Schema } from './types'
 
 export const processConfig = withCache(processConfigInternal, {
   cacheLimit: 50,
-  getKey: ([config]) => config.id,
+  getKey: ([cacheKey]) => cacheKey,
 })
 
 function processConfigInternal<T extends Schema<string>, P extends Schema<T['schema']>>(
-  config: T,
+  _cacheKey: string,
+  configFn: () => Omit<T, 'schema'>,
   transformFn?: (config: T) => any,
 ): ProcessedConfig<P> {
-  const evaluatedConfig = evaluateExpressionsToSignals(config)
+  const evaluatedConfig = evaluateExpressionsToSignals(configFn())
   const transformedConfig = transformFn ? transformFn(evaluatedConfig) : evaluatedConfig
   return transformedConfig
 }

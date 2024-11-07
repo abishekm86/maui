@@ -1,34 +1,40 @@
 import { useState } from 'preact/hooks'
-import { BaseConfig, TemplateRenderer } from 'maui-core'
-import { configList } from './configRegistry'
+import { TemplateRenderer } from 'maui-core'
+import { configRegistry } from './configRegistry'
 import { Nav } from './Nav'
 import { ErrorBoundary } from './ErrorBoundary'
 
 export function App() {
-  const [selectedConfig, setSelectedConfig] = useState<BaseConfig | null>(null)
-  const [pinnedConfig, setPinnedConfig] = useState<BaseConfig | null>(null)
+  const [selectedConfigId, setSelectedConfigId] = useState<string | null>(null)
+  const [pinnedConfigId, setPinnedConfigId] = useState<string | null>(null)
 
-  const currentConfig = pinnedConfig ?? selectedConfig
+  // Retrieve the current selected or pinned config from the registry
+  const currentConfigId = pinnedConfigId || selectedConfigId || 'none'
+  const currentConfig =
+    (pinnedConfigId && configRegistry[pinnedConfigId]) ||
+    (selectedConfigId && configRegistry[selectedConfigId]) ||
+    null
 
   return (
     <div className="container">
       <nav>
         <h2>Configs</h2>
         <Nav
-          configList={configList}
-          pinnedConfig={pinnedConfig}
-          setSelectedConfig={setSelectedConfig}
-          setPinnedConfig={setPinnedConfig}
+          configRegistry={configRegistry}
+          pinnedConfigId={pinnedConfigId}
+          setSelectedConfigId={setSelectedConfigId}
+          setPinnedConfigId={setPinnedConfigId}
         />
       </nav>
 
       <div className="main-content">
         <div className="template-content">
           <h1>Selected Configuration</h1>
-          {currentConfig && (
-            <ErrorBoundary key={currentConfig.id}>
+          {currentConfigId !== null && currentConfig && (
+            <ErrorBoundary key={currentConfigId}>
               <TemplateRenderer
                 config={currentConfig}
+                id={currentConfigId}
                 context={{ theme: 'material', density: 'detailed' }}
               />
             </ErrorBoundary>
