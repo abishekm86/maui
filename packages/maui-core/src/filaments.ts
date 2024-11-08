@@ -45,7 +45,7 @@ export function asyncEffect<I, O>(
           outputSignal.value = {
             loading: false,
             refreshing: false,
-            value: outputSignal.peek().value, // TODO: reset to undefined instead or previous value?
+            value: outputSignal.peek().value, // TODO: reset to undefined instead of previous value?
             error: error instanceof Error ? error : new Error(String(error)),
           }
         }

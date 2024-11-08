@@ -1,6 +1,5 @@
-export const defaultAsync = <T>(value: T | undefined = undefined) => ({
+export const defaultAsync = <T>(value?: T) => ({
   loading: value === undefined,
   refreshing: false,
-  error: undefined,
   value,
 })

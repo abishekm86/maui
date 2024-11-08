@@ -1,5 +1,5 @@
 import { Color, Size } from 'ds'
-import { Config, asyncEffect, conditionalComputed, defaultAsync, ConfigRegistry } from 'maui-core'
+import { Config, asyncEffect, conditionalComputed, ConfigRegistry } from 'maui-core'
 import { signal } from '@preact/signals'
 
 const Blue: Config<Color.v1> = {
@@ -17,19 +17,26 @@ const Grey: Config<Color.v2> = {
 
 const Red: Config<Color.v2> = {
   schema: 'color@2',
-  configFn: () => ({
-    theme: {
-      color: '#aa3333',
-      colorText: () => 'red',
-    },
-    heading: () => 'my color',
-  }),
+
+  configFn: () => {
+    const user = signal('abishek')
+    const userColor = signal('#aa3333')
+    const getColorText = (color: string) => (color === '#aa3333' ? () => 'red' : '-')
+
+    return {
+      theme: {
+        color: userColor,
+        colorText: getColorText(userColor.value),
+      },
+      heading: () => `${user.value}'s color`,
+    }
+  },
 }
 
 const FortyTwo: Config<Size.v1> = {
   schema: 'size@1',
   configFn: () => ({
-    size: () => defaultAsync(42),
+    size: () => ({ value: 42 }),
   }),
 }
 
@@ -44,25 +51,7 @@ const Numbers: Config<Size.v1> = {
     }, 1000)
 
     return {
-      size: () => defaultAsync(num.value),
-    }
-  },
-}
-
-const Evens: Config<Size.v1> = {
-  schema: 'size@1',
-  configFn: () => {
-    const num = signal(1)
-
-    const evens = conditionalComputed(num, n => n % 2 === 0)
-
-    // TODO: suspendable trigger
-    setInterval(() => {
-      num.value++
-    }, 500)
-
-    return {
-      size: () => defaultAsync(evens.value),
+      size: () => ({ value: num.value }),
     }
   },
 }
@@ -70,20 +59,21 @@ const Evens: Config<Size.v1> = {
 const Squares: Config<Size.v1> = {
   schema: 'size@1',
   configFn: () => {
-    const num = signal(1)
-
-    const square = asyncEffect(num, n => {
-      return new Promise<number>(resolve => {
+    const someAsyncComputation = (n: number) =>
+      new Promise<number>(resolve => {
         setTimeout(() => {
           resolve(n ** 2)
-        }, 1000)
+        }, 500)
       })
-    })
+
+    const num = signal(1)
+    const filter = conditionalComputed(num, n => n % 2 === 0)
+    const square = asyncEffect(filter, n => someAsyncComputation(n))
 
     // TODO: suspendable trigger
     setInterval(() => {
       num.value++
-    }, 2000)
+    }, 1000)
 
     return {
       size: square,
@@ -97,6 +87,5 @@ export const configRegistry: ConfigRegistry = {
   red: Red,
   fortyTwo: FortyTwo,
   numbers: Numbers,
-  evens: Evens,
   squares: Squares,
 }

@@ -57,10 +57,10 @@ type Primitive = string | number | boolean | bigint | symbol
 export type Value<T> = T extends Primitive ? T | Fn<T> | Signal<T> : Fn<T> | Signal<T>
 
 export interface Async<T> {
-  loading: boolean
-  refreshing: boolean
+  loading?: boolean
+  refreshing?: boolean
   value?: T
-  error: Error | null | undefined
+  error?: Error | null
 }
 
 // Helper types for processed configs

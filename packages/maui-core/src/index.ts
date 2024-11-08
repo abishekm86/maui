@@ -9,6 +9,7 @@ export type {
   Value,
   Async,
 } from './types'
+export type { Signal } from '@preact/signals'
 export * from './TemplateRenderer'
 export * from './utils'
 export * from './registry'

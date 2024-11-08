@@ -1,6 +1,6 @@
 import { Typography } from '@mui/material'
 import { Size } from 'src/schemas'
-import { Template, Async, ProcessedConfig, Value } from 'maui-core'
+import { Template, Signal, Async } from 'maui-core'
 import { Metadata, TemplateFeatures } from 'src/types'
 
 export const metadata: Metadata<Size.v1> = {
@@ -10,10 +10,7 @@ export const metadata: Metadata<Size.v1> = {
   },
 }
 
-// TODO: simplify typing this:
-export const DetailedComponent = function ({
-  size,
-}: ProcessedConfig<{ size: Value<Async<number>> }>) {
+export const DetailedComponent = function ({ size }: { size: Signal<Async<number>> }) {
   return (
     <div>
       <Typography variant="h4">
@@ -26,15 +23,13 @@ export const DetailedComponent = function ({
   )
 }
 
-export const SummaryComponent = function ({
-  size,
-}: ProcessedConfig<{ size: Value<Async<number>> }>) {
+export const SummaryComponent = function ({ size }: { size: Signal<Async<number>> }) {
   return (
     <div>
       <Typography variant="h4">
         <b>
           <span style={{ color: size.value.refreshing ? '#ff0000' : '#000000' }}>
-            {size.value.loading ? '-' : size.value.value}
+            {size.value.loading ? '-' : (size.value.value ?? NaN)}
           </span>
         </b>
       </Typography>

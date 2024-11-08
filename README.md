@@ -18,6 +18,7 @@ pnpm prepare # enables automatic linting and formatting code before checkin
 
 ```bash
 pnpm build # builds prod artifact
+pnpm analyze # analyzes bundle size
 pnpm dev # runs debug artifact (unminified) with HMR
 pnpm preview # runs prod artifact (no HMR)
 pnpm test # executes unit tests
