@@ -94,3 +94,44 @@ nav ul li.active {
     padding: 10px;
   }
 }
+
+/* Settings toggle container */
+.settings-toggle {
+  margin-top: 20px;
+  color: white;
+}
+
+.settings-toggle h3 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #ecf0f1;
+}
+
+.settings-toggle span {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.settings-toggle select {
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 5px;
+  border: 1px solid #34495e;
+  background-color: #34495e;
+  color: white;
+  transition: background-color 0.3s ease;
+  margin-top: 5px;
+}
+
+/* Dropdown hover and focus styles */
+.settings-toggle select:hover {
+  background-color: #1abc9c;
+  border-color: #1abc9c;
+}
+
+.settings-toggle select:focus {
+  outline: none;
+  box-shadow: 0 0 3px 1px #1abc9c;
+  border-color: #1abc9c;
+}

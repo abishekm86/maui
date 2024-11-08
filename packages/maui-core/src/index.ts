@@ -1,6 +1,7 @@
 export type {
   Schema,
   Config,
+  ProcessedConfig,
   TemplateMetadata,
   Template,
   ConfigRegistry,

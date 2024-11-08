@@ -8,7 +8,7 @@ async function initTemplates() {
   registerSearchMatrix(
     new Map([
       ['theme', ['chakra', 'material']],
-      ['density', ['compact', 'summary', 'detailed']],
+      ['density', ['graphical', 'summary', 'detailed']],
       ['mode', ['dark', 'light']],
     ]),
   )

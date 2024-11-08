@@ -7,7 +7,7 @@ import { processConfig } from './processConfig'
 export interface TemplateRendererProps {
   config: BaseConfig
   id: string
-  context?: { [key: string]: string }
+  requestedFeatures?: { [key: string]: string }
   loadingFallback?: (config: string) => JSX.Element
   errorFallback?: (error: string) => JSX.Element
 }
@@ -16,7 +16,7 @@ export interface TemplateRendererProps {
 export function TemplateRenderer({
   config,
   id,
-  context,
+  requestedFeatures,
   loadingFallback = config => <div>Loading template for {config}...</div>,
   errorFallback = error => <div>Render Error: {error}</div>,
 }: TemplateRendererProps) {
@@ -25,12 +25,12 @@ export function TemplateRenderer({
 
   const schema = config.schema
   useMemo(() => {
-    if (!context) {
+    if (!requestedFeatures) {
       setError('Search criteria or template must be provided')
       return
     }
 
-    findBestTemplate(schema, context)
+    findBestTemplate(schema, requestedFeatures)
       .then(module => {
         if (!module || !module.template || !module.metadata) {
           throw new Error(`No suitable template found`)
@@ -41,7 +41,7 @@ export function TemplateRenderer({
       .catch(err => {
         setError(`Failed to load template for ${schema}: ${err.message}`)
       })
-  }, [schema, context])
+  }, [schema, requestedFeatures])
 
   if (error) {
     return errorFallback(error)
@@ -55,5 +55,5 @@ export function TemplateRenderer({
   const processedConfig = processConfig(id, config.configFn, metadata?.transform)
 
   // TODO: pass in requested features to let template adjust dynamically
-  return template!(processedConfig)
+  return template!(processedConfig, requestedFeatures)
 }

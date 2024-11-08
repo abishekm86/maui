@@ -1,6 +1,6 @@
 import { Color, Size } from 'ds'
 import { Config, asyncEffect, conditionalComputed, defaultAsync, ConfigRegistry } from 'maui-core'
-import { effect, signal } from '@preact/signals'
+import { signal } from '@preact/signals'
 
 const Blue: Config<Color.v1> = {
   schema: 'color@1',
@@ -10,14 +10,9 @@ const Blue: Config<Color.v1> = {
   }),
 }
 
-const Green: Config<Color.v2> = {
+const Grey: Config<Color.v2> = {
   schema: 'color@2',
-  configFn: () => ({
-    theme: {
-      color: '#33aa33',
-      colorText: () => 'green',
-    },
-  }),
+  configFn: () => ({}),
 }
 
 const Red: Config<Color.v2> = {
@@ -42,7 +37,7 @@ const Numbers: Config<Size.v1> = {
   schema: 'size@1',
   configFn: () => {
     const num = signal(1)
-    effect(() => console.log(num.value))
+    // effect(() => console.log(num.value))
     // TODO: suspendable trigger
     setInterval(() => {
       num.value++
@@ -64,7 +59,7 @@ const Evens: Config<Size.v1> = {
     // TODO: suspendable trigger
     setInterval(() => {
       num.value++
-    }, 1000)
+    }, 500)
 
     return {
       size: () => defaultAsync(evens.value),
@@ -81,14 +76,14 @@ const Squares: Config<Size.v1> = {
       return new Promise<number>(resolve => {
         setTimeout(() => {
           resolve(n ** 2)
-        }, 500)
+        }, 1000)
       })
     })
 
     // TODO: suspendable trigger
     setInterval(() => {
       num.value++
-    }, 1000)
+    }, 2000)
 
     return {
       size: square,
@@ -98,7 +93,7 @@ const Squares: Config<Size.v1> = {
 
 export const configRegistry: ConfigRegistry = {
   blue: Blue,
-  green: Green,
+  grey: Grey,
   red: Red,
   fortyTwo: FortyTwo,
   numbers: Numbers,

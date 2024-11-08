@@ -29,17 +29,20 @@ export function Nav({
   }
 
   return (
-    <ul>
-      {Object.entries(configRegistry).map(([id]) => (
-        <li
-          key={id}
-          onMouseEnter={() => handleConfigHover(id)}
-          onClick={() => handleConfigClick(id)}
-          className={pinnedConfigId === id ? 'pinned' : ''}
-        >
-          {id}
-        </li>
-      ))}
-    </ul>
+    <>
+      <h3>Configs</h3>
+      <ul>
+        {Object.entries(configRegistry).map(([id]) => (
+          <li
+            key={id}
+            onMouseEnter={() => handleConfigHover(id)}
+            onClick={() => handleConfigClick(id)}
+            className={pinnedConfigId === id ? 'pinned' : ''}
+          >
+            {id}
+          </li>
+        ))}
+      </ul>
+    </>
   )
 }

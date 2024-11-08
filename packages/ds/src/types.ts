@@ -1,10 +1,10 @@
 import { Schema, TemplateMetadata } from 'maui-core'
 
 type TemplateTheme = 'material' | 'chakra'
-type TemplateDensity = 'summary' | 'compact' | 'detailed'
+type TemplateDensity = 'graphical' | 'summary' | 'detailed'
 type TemplateMode = 'dark' | 'light'
 
-type TemplateFeatures = {
+export type TemplateFeatures = {
   theme?: TemplateTheme
   density?: TemplateDensity
   mode?: TemplateMode

@@ -11,11 +11,12 @@ export const processConfig = withCache(processConfigInternal, {
 function processConfigInternal<T extends Schema<string>, P extends Schema<T['schema']>>(
   _cacheKey: string,
   configFn: () => Omit<T, 'schema'>,
-  transformFn?: (config: T) => any,
+  transformFn?: (config: Omit<T, 'schema'>) => any,
 ): ProcessedConfig<P> {
-  const evaluatedConfig = evaluateExpressionsToSignals(configFn())
-  const transformedConfig = transformFn ? transformFn(evaluatedConfig) : evaluatedConfig
-  return transformedConfig
+  const config = configFn()
+  const transformedConfig = transformFn ? transformFn(config) : config
+  const evaluatedConfig = evaluateExpressionsToSignals(transformedConfig)
+  return evaluatedConfig
 }
 
 function evaluateExpressionsToSignals(configValue: any): any {
