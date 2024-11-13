@@ -1,4 +1,4 @@
-import { Signal } from '@preact/signals'
+import { ReadonlySignal } from '@preact/signals'
 import { VNode } from 'preact'
 
 export type Schema<T extends string> = {
@@ -54,13 +54,17 @@ type Fn<T> = () => T
 
 type Primitive = string | number | boolean | bigint | symbol
 
-export type Value<T> = T extends Primitive ? T | Fn<T> | Signal<T> : Fn<T> | Signal<T>
+export type Value<T> = [T] extends [Primitive] ? T | Fn<T> | State<T> : Fn<T> | State<T>
 
-export interface Async<T> {
-  loading?: boolean
-  refreshing?: boolean
+export interface Result<T> {
   value?: T
   error?: Error | null
+}
+
+export interface AsyncValue<T> {
+  result: Value<Result<T>>
+  loading?: Value<boolean>
+  refreshing?: Value<boolean>
 }
 
 // Helper types for processed configs
@@ -74,21 +78,29 @@ type Config<T> = {
   f: { g?: T, h: T }
 }
 
-ProcessedConfig<string> should be { a?: Signal<string>, ... }
-ProcessedConfig<Value<string>> should be { a?: Signal<string>, ... }
-ProcessedConfig<Async<string>> should be { a?: { loading: Signal<boolean>, ... }, ... }
-ProcessedConfig<Value<Async<string>>> should be { a?: Signal<Async<string>>, ... }
+ProcessedConfig<string> should be { a?: State<string>, ... }
+ProcessedConfig<Value<string>> should be { a?: State<string>, ... }
+ProcessedConfig<Async<string>> should be { a?: { loading: State<boolean>, ... }, ... }
+ProcessedConfig<Value<Async<string>>> should be { a?: State<Async<string>>, ... }
 */
+export type State<T> = ReadonlySignal<T>
+
+export interface AsyncState<T> {
+  result: State<Result<T>>
+  loading?: State<boolean>
+  refreshing?: State<boolean>
+}
+
 type IsValue<T> = [T] extends [Value<infer _U>] ? true : false
 
 export type ProcessedConfig<T> = {
   [K in keyof T]: IsValue<Exclude<T[K], undefined>> extends true
     ? Exclude<T[K], undefined> extends Value<infer U>
-      ? Signal<Exclude<U, undefined | Fn<U> | Signal<U>>>
+      ? State<Exclude<U, undefined | Fn<U> | State<U>>>
       : never
     : Exclude<T[K], undefined> extends object
       ? ProcessedConfig<T[K]>
-      : Signal<Exclude<T[K], undefined>>
+      : State<Exclude<T[K], undefined>>
 }
 
 // TODO: check for correctness and replace ProcessedConfig with this:

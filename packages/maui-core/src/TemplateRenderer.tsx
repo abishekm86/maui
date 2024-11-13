@@ -54,6 +54,6 @@ export function TemplateRenderer({
   const { template, metadata } = templateModule
   const processedConfig = processConfig(id, config.configFn, metadata?.transform)
 
-  // TODO: pass in requested features to let template adjust dynamically
+  // TODO: cache this
   return template!(processedConfig, requestedFeatures)
 }

@@ -1,35 +1,58 @@
 import { Typography } from '@mui/material'
 import { Size } from 'src/schemas'
-import { Template, Signal, Async } from 'maui-core'
+import { Template, Schema, ProcessedConfig, AsyncValue } from 'maui-core'
 import { Metadata, TemplateFeatures } from 'src/types'
 
-export const metadata: Metadata<Size.v1> = {
+interface TemplateProps extends Schema<'size@1'> {
+  size: Required<AsyncValue<number>>
+}
+
+export const metadata: Metadata<Size.v1, TemplateProps> = {
   schema: 'size@1',
   features: {
     theme: 'material',
   },
+  transform: config => {
+    return {
+      schema: 'size@1',
+      size: {
+        ...config.size,
+        loading: config.size.loading ?? false,
+        refreshing: config.size.refreshing ?? false,
+      },
+    }
+  },
 }
 
-export const DetailedComponent = function ({ size }: { size: Signal<Async<number>> }) {
+export const DetailedComponent = function ({
+  result,
+  refreshing,
+  loading,
+}: ProcessedConfig<TemplateProps['size']>) {
+  const AsyncIndicator = () => (
+    <span>{refreshing.value ? 'refreshing...' : loading.value ? 'loading...' : <br />}</span>
+  )
   return (
     <div>
       <Typography variant="h4">
-        Value: <b>{size.value.loading ? '-' : size.value.value}</b>
+        Value: <b>{loading.value ? '-' : (result.value.value ?? NaN)}</b>
       </Typography>
-      <span>
-        {size.value.refreshing ? 'refreshing...' : size.value.loading ? 'loading...' : <br />}
-      </span>
+      <AsyncIndicator />
     </div>
   )
 }
 
-export const SummaryComponent = function ({ size }: { size: Signal<Async<number>> }) {
+export const SummaryComponent = function ({
+  result,
+  refreshing,
+  loading,
+}: ProcessedConfig<TemplateProps['size']>) {
   return (
     <div>
       <Typography variant="h4">
         <b>
-          <span style={{ color: size.value.refreshing ? '#ff0000' : '#000000' }}>
-            {size.value.loading ? '-' : (size.value.value ?? NaN)}
+          <span style={{ color: refreshing.value ? '#ff0000' : '#000000' }}>
+            {loading.value ? '-' : (result.value.value ?? NaN)}
           </span>
         </b>
       </Typography>
@@ -37,7 +60,7 @@ export const SummaryComponent = function ({ size }: { size: Signal<Async<number>
   )
 }
 
-export const template: Template<Size.v1, TemplateFeatures> = function ({ size }, features) {
+export const template: Template<TemplateProps, TemplateFeatures> = function ({ size }, features) {
   return (
     <>
       <Typography variant="h6">Hello world.. this shouldn't rerender</Typography>
@@ -45,9 +68,9 @@ export const template: Template<Size.v1, TemplateFeatures> = function ({ size },
         // Tip: Dereferencing value will cause the containing component to renrender to change. Don't do this:
         // <Typography variant="h4">{size.value.value}</Typography>
         // Tip: Passing a signal directly instead of its value optimizes rendering
-        <SummaryComponent size={size} />
+        <SummaryComponent {...size} />
       ) : (
-        <DetailedComponent size={size} />
+        <DetailedComponent {...size} />
       )}
       <Typography variant="h6">And neither should this...</Typography>
     </>

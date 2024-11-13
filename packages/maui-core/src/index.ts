@@ -7,9 +7,8 @@ export type {
   ConfigRegistry,
   TemplateMetadataRegistry,
   Value,
-  Async,
+  AsyncValue,
 } from './types'
-export type { Signal } from '@preact/signals'
 export * from './TemplateRenderer'
 export * from './utils'
 export * from './registry'

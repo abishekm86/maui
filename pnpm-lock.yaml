@@ -29,9 +29,6 @@ importers:
       '@mui/material':
         specifier: ^6.1.3
         version: 6.1.3(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react@18.3.1))(@types/react@18.3.11)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@preact/signals':
-        specifier: ^1.3.0
-        version: 1.3.0(preact@10.24.3)
       ds:
         specifier: workspace:*
         version: link:../../packages/ds

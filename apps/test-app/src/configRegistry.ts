@@ -1,6 +1,14 @@
 import { Color, Size } from 'ds'
-import { Config, asyncEffect, conditionalComputed, ConfigRegistry } from 'maui-core'
-import { signal } from '@preact/signals'
+import {
+  Config,
+  ConfigRegistry,
+  $action,
+  $filter,
+  $,
+  $invoke,
+  defaultResult,
+  $async,
+} from 'maui-core'
 
 const Blue: Config<Color.v1> = {
   schema: 'color@1',
@@ -19,8 +27,7 @@ const Red: Config<Color.v2> = {
   schema: 'color@2',
 
   configFn: () => {
-    const user = signal('abishek')
-    const userColor = signal('#aa3333')
+    const [userColor] = $('#aa3333')
     const getColorText = (color: string) => (color === '#aa3333' ? () => 'red' : '-')
 
     return {
@@ -28,7 +35,7 @@ const Red: Config<Color.v2> = {
         color: userColor,
         colorText: getColorText(userColor.value),
       },
-      heading: () => `${user.value}'s color`,
+      heading: 'My color',
     }
   },
 }
@@ -36,22 +43,25 @@ const Red: Config<Color.v2> = {
 const FortyTwo: Config<Size.v1> = {
   schema: 'size@1',
   configFn: () => ({
-    size: () => ({ value: 42 }),
+    size: {
+      result: () => defaultResult(42),
+    },
   }),
 }
 
 const Numbers: Config<Size.v1> = {
   schema: 'size@1',
   configFn: () => {
-    const num = signal(1)
-    // effect(() => console.log(num.value))
+    const [num, setNum] = $(1)
+    const result = $async(num)
+    $action(n => console.log(n), [num])
     // TODO: suspendable trigger
     setInterval(() => {
-      num.value++
+      setNum(num.value + 1)
     }, 1000)
 
     return {
-      size: () => ({ value: num.value }),
+      size: result,
     }
   },
 }
@@ -66,17 +76,43 @@ const Squares: Config<Size.v1> = {
         }, 500)
       })
 
-    const num = signal(1)
-    const filter = conditionalComputed(num, n => n % 2 === 0)
-    const square = asyncEffect(filter, n => someAsyncComputation(n))
+    const [num, setNum] = $(1)
+    const filtered = $filter(n => n % 2 === 0, num)
+    const [result] = $action(f => someAsyncComputation(f), [filtered])
 
-    // TODO: suspendable trigger
     setInterval(() => {
-      num.value++
+      setNum(num.value + 1)
     }, 1000)
 
     return {
-      size: square,
+      size: result,
+    }
+  },
+}
+
+const Now: Config<Size.v1> = {
+  schema: 'size@1',
+  configFn: () => {
+    const getDateFromAsyncApi = (show: string) =>
+      new Promise<number>(resolve => {
+        setTimeout(() => {
+          resolve(
+            show === 'seconds'
+              ? new Date().getSeconds()
+              : show === 'minutes'
+                ? new Date().getMinutes()
+                : Date.now(),
+          )
+        }, 500)
+      })
+
+    const [param] = $('minutes')
+    const [result, trigger] = $action(s => getDateFromAsyncApi(s), [param])
+
+    $invoke(trigger, 1000)
+
+    return {
+      size: result,
     }
   },
 }
@@ -88,4 +124,5 @@ export const configRegistry: ConfigRegistry = {
   fortyTwo: FortyTwo,
   numbers: Numbers,
   squares: Squares,
+  now: Now,
 }

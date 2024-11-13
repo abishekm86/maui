@@ -17,7 +17,7 @@ export const metadata: Metadata<Color.v2, TemplateProps> = {
   transform: config => {
     return {
       schema: 'color@2',
-      color: config.theme?.color ?? '#6666',
+      color: config.theme?.color ?? '#666666',
       colorText: config.theme?.colorText ?? (() => 'grey'),
       heading: config.heading ?? (() => 'color'),
     }

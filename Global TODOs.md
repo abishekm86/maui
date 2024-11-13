@@ -5,10 +5,15 @@ Cached computed signals
 Debounced, throttled input signals
 Nested config (configrender); config renderer action; Config input and output; Config composition (build time)
 Render props, mappers
-Builders & Escape hatch; builder input/output
+Builders & Escape hatch; builder input/output; builder error boundary
 Forms, actions
 Template inheritance
 Template versioning
 Gateway graphql
 Make Config registry similar to template registry
 Lock down model
+Display context (eg, parent, inline, modal)
+persist state (signals/gateway model across sessions) - rxdb; broadcast to sync tabs
+readonly signals - suspend updates
+config prefetching; bundling; module imports
+signal error handling
