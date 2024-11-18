@@ -1,6 +1,6 @@
 import { Typography } from '@mui/material'
+import { AsyncValue, ProcessedConfig, Schema, Template } from 'maui-core'
 import { Size } from 'src/schemas'
-import { Template, Schema, ProcessedConfig, AsyncValue } from 'maui-core'
 import { Metadata, TemplateFeatures } from 'src/types'
 
 interface TemplateProps extends Schema<'size@1'> {

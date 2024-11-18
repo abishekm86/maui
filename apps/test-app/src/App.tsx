@@ -1,9 +1,10 @@
-import { useState } from 'preact/hooks'
 import { TemplateRenderer } from 'maui-core'
-import { configRegistry } from './configRegistry'
-import { Nav } from './Nav'
+import { useState } from 'preact/hooks'
+
 import { ErrorBoundary } from './ErrorBoundary'
+import { Nav } from './Nav'
 import { Settings } from './Settings'
+import { configRegistry } from './configRegistry'
 
 export function App() {
   const [selectedConfigId, setSelectedConfigId] = useState<string | null>(null)

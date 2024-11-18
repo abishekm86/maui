@@ -1,4 +1,4 @@
-import { Value, Schema } from 'maui-core'
+import { Schema, Value } from 'maui-core'
 
 export namespace Color {
   export interface v1 extends Schema<'color@1'> {

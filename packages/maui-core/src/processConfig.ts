@@ -1,4 +1,5 @@
-import { computed, signal, Signal } from '@preact/signals'
+import { Signal, computed, signal } from '@preact/signals'
+
 // import { ProcessedConfig } from './types'
 import { withCache } from './cache'
 import { ProcessedConfig, Schema } from './types'

@@ -1,9 +1,9 @@
 import {
   BaseTemplateMetadata,
-  searchMatrix,
   TemplateEntry,
   TemplateMetadataRegistry,
   TemplateModule,
+  searchMatrix,
   templateRegistry,
 } from './types'
 

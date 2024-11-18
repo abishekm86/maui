@@ -1,5 +1,5 @@
-import { templateRegistry, TemplateEntry, searchMatrix, TemplateModule } from './types'
 import { withCache } from './cache'
+import { TemplateEntry, TemplateModule, searchMatrix, templateRegistry } from './types'
 
 export const findBestTemplate = withCache(findBestTemplateInternal, { cacheLimit: 50 })
 

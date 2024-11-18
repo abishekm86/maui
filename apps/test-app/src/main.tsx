@@ -1,8 +1,9 @@
+import { templateMetadataRegistry } from 'ds'
+import { registerSearchMatrix, registerTemplates } from 'maui-core'
 import { render } from 'preact'
+
 import { App } from './App'
 import './assets/index.css'
-import { registerSearchMatrix, registerTemplates } from 'maui-core'
-import { templateMetadataRegistry } from 'ds'
 
 async function initTemplates() {
   registerSearchMatrix(

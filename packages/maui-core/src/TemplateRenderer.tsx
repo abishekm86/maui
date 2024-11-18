@@ -1,8 +1,9 @@
+import { useMemo, useState } from 'preact/hooks'
 import { JSX } from 'preact/jsx-runtime'
-import { useState, useMemo } from 'preact/hooks'
+
 import { findBestTemplate } from './findBestTemplate'
-import { BaseConfig, TemplateModule } from './types'
 import { processConfig } from './processConfig'
+import { BaseConfig, TemplateModule } from './types'
 
 export interface TemplateRendererProps {
   config: BaseConfig

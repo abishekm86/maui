@@ -1,6 +1,6 @@
 import { Box } from '@mui/material'
-import { Color } from 'src/schemas'
 import { Template } from 'maui-core'
+import { Color } from 'src/schemas'
 import { Metadata } from 'src/types'
 
 export const metadata: Metadata<Color.v1> = {

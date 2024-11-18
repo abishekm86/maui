@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material'
-import { Color } from 'src/schemas'
 import { Schema, Template, Value } from 'maui-core'
+import { Color } from 'src/schemas'
 import { Metadata, TemplateFeatures } from 'src/types'
 
 interface TemplateProps extends Schema<'color@2'> {

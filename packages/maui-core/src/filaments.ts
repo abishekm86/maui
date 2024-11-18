@@ -1,4 +1,5 @@
-import { signal, effect, computed, Signal, untracked } from '@preact/signals'
+import { Signal, computed, effect, signal, untracked } from '@preact/signals'
+
 import { AsyncState, State } from './types'
 import { defaultResult } from './utils'
 
@@ -66,7 +67,7 @@ export function $asyncAction<O>(fn: ComputeFunction<O>): [AsyncState<O>, () => v
 }
 
 // TODO: add last updated
-export function $trigger(fn: () => void): () => void {
+export function $updater(fn: () => void): () => void {
   const [triggerSignal, setTriggerSignal] = $(0)
   let firstRun = true
 

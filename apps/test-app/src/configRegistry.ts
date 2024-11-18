@@ -1,15 +1,15 @@
 import { Color, Size } from 'ds'
 import {
-  Config,
-  ConfigRegistry,
+  $,
   $action,
+  $async,
   $asyncAction,
   $if,
-  $,
   $invoke,
+  $updater,
+  Config,
+  ConfigRegistry,
   defaultResult,
-  $async,
-  $trigger,
 } from 'maui-core'
 
 const Blue: Config<Color.v1> = {
@@ -55,7 +55,7 @@ const Numbers: Config<Size.v1> = {
   schema: 'size@1',
   configFn: () => {
     const [num, setNum] = $(1)
-    const trigger = $trigger(() => setNum(num.value + 1))
+    const trigger = $updater(() => setNum(num.value + 1))
     $invoke(trigger, 1000)
     $action(() => console.log(num.value))
     const asyncNum = $async(num)
@@ -77,7 +77,7 @@ const Squares: Config<Size.v1> = {
       })
 
     const [num, setNum] = $(1)
-    const trigger = $trigger(() => setNum(num.value + 1))
+    const trigger = $updater(() => setNum(num.value + 1))
     $invoke(trigger, 1000)
 
     const filtered = $if(() => num.value % 2 === 0, num) // alias for { $then: () => num.value, $else: prev => prev, initialValue: num.value }
