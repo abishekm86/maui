@@ -1,14 +1,14 @@
-import { signal, effect, computed } from '@preact/signals'
+import { signal, effect, computed, Signal, untracked } from '@preact/signals'
 import { AsyncState, State } from './types'
 import { defaultResult } from './utils'
 
-type ComputeFunction<I extends any[], O> = (...input: [...I, AbortSignal?]) => O | Promise<O>
+// TODO: make triggerable
+export const $action = effect
+
+type ComputeFunction<O> = (abort?: AbortSignal) => O | Promise<O>
 
 // TODO: add last updated
-export function $action<I extends any[], O>(
-  fn: ComputeFunction<I, O>,
-  binds: { [K in keyof I]?: State<I[K]> },
-): [AsyncState<O>, () => void] {
+export function $asyncAction<O>(fn: ComputeFunction<O>): [AsyncState<O>, () => void] {
   const [result, setResult] = $(defaultResult<O>())
   const [loading, setLoading] = $(true)
   const [refreshing, setRefreshing] = $(false)
@@ -17,10 +17,11 @@ export function $action<I extends any[], O>(
   let computationId = 0
   let abortController: AbortController | null = null
 
+  const computedFn = computed(() => fn)
+
   effect(() => {
     triggerSignal.value // This will cause the effect to depend on `triggerSignal`
 
-    const inputValues = binds.map(signal => signal && signal.value) as [...I]
     computationId += 1
     const currentId = computationId
 
@@ -32,7 +33,8 @@ export function $action<I extends any[], O>(
 
     const compute = async () => {
       try {
-        const resultValue = await Promise.resolve(fn(...inputValues, abortController!.signal))
+        const resultValue = await Promise.resolve(computedFn.value(abortController!.signal))
+
         // TODO: support custom equality check
         if (currentId === computationId && resultValue !== result.peek().value) {
           setResult({
@@ -63,6 +65,21 @@ export function $action<I extends any[], O>(
   return [{ result, loading, refreshing }, () => setTriggerSignal(triggerSignal.value + 1)]
 }
 
+// TODO: add last updated
+export function $trigger(fn: () => void): () => void {
+  const [triggerSignal, setTriggerSignal] = $(0)
+  let firstRun = true
+
+  effect(() => {
+    triggerSignal.value // This will cause the effect to depend on `triggerSignal`
+    !firstRun && untracked(fn)
+    firstRun = false
+  })
+
+  // Return both the output signal and a trigger function to control the effect manually
+  return () => setTriggerSignal(triggerSignal.value + 1)
+}
+
 export function $invoke(trigger: () => void, interval: number): () => void {
   const intervalId = setInterval(() => {
     trigger() // Invoke the trigger function to re-trigger the effect
@@ -77,24 +94,42 @@ export function $invoke(trigger: () => void, interval: number): () => void {
   return stop
 }
 
-type ConditionFunction<T> = (value: T) => boolean
-
-export function $filter<T>(condition: ConditionFunction<T>, inputSignal: State<T>): State<T> {
-  // Start with the initial value, assuming it satisfies the condition
-  const cachedSignal = signal<T>(inputSignal.value)
-
-  // Create a computed signal that only updates when the condition is met
-  return computed(() => {
-    const currentValue = inputSignal.value
-    if (condition(currentValue)) {
-      cachedSignal.value = currentValue
-    }
-    return cachedSignal.value
-  })
+type IfOptions<T> = {
+  $then: () => T
+  $else?: (prev: T) => T
+  initialValue: T
 }
 
+export function $if<T>(condition: () => boolean, options: IfOptions<T> | State<T>): State<T> {
+  const computedCondition = computed(() => condition)
+
+  let cachedSignal: Signal<T>
+  let computeValue: () => T
+
+  if (options instanceof Signal) {
+    cachedSignal = signal<T>(options.value)
+    computeValue = () => (computedCondition.value() ? options.value : cachedSignal.value)
+  } else {
+    const { initialValue, $then, $else = prev => prev } = options as IfOptions<T>
+    cachedSignal = signal<T>(initialValue)
+    const computedIfTrue = computed(() => $then)
+    const computedIfFalse = computed(() => $else)
+    computeValue = () =>
+      computedCondition.value() ? computedIfTrue.value() : computedIfFalse.value(cachedSignal.value)
+  }
+
+  // Create a computed signal that updates based on the condition and options
+  const result = computed(() => {
+    cachedSignal.value = computeValue()
+    return cachedSignal.value
+  })
+
+  return result
+}
+
+// TODO: rethink this
 export function $async<T>(signal: State<T>) {
-  const [result] = $action(x => x, [signal])
+  const [result] = $asyncAction(() => signal.value)
   return result
 }
 

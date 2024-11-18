@@ -3,6 +3,7 @@ import { computed, signal, Signal } from '@preact/signals'
 import { withCache } from './cache'
 import { ProcessedConfig, Schema } from './types'
 
+// TODO: BUG: cache key based on template id as well, since transforms are template specific
 export const processConfig = withCache(processConfigInternal, {
   cacheLimit: 50,
   getKey: ([cacheKey]) => cacheKey,
@@ -14,6 +15,7 @@ function processConfigInternal<T extends Schema<string>, P extends Schema<T['sch
   transformFn?: (config: Omit<T, 'schema'>) => any,
 ): ProcessedConfig<P> {
   const config = configFn()
+  // TODO: evaluate expressions first before transformation to simplify tranforming the input config
   const transformedConfig = transformFn ? transformFn(config) : config
   const evaluatedConfig = evaluateExpressionsToSignals(transformedConfig)
   return evaluatedConfig

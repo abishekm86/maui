@@ -2,6 +2,7 @@ import { Result } from './types'
 
 export const defaultResult = <T>(initialValue?: T): Result<T> => ({
   value: initialValue,
+  error: initialValue === undefined ? undefined : null,
 })
 
 type Path<T> = T extends object

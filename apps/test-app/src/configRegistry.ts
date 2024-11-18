@@ -3,11 +3,13 @@ import {
   Config,
   ConfigRegistry,
   $action,
-  $filter,
+  $asyncAction,
+  $if,
   $,
   $invoke,
   defaultResult,
   $async,
+  $trigger,
 } from 'maui-core'
 
 const Blue: Config<Color.v1> = {
@@ -53,15 +55,13 @@ const Numbers: Config<Size.v1> = {
   schema: 'size@1',
   configFn: () => {
     const [num, setNum] = $(1)
-    const result = $async(num)
-    $action(n => console.log(n), [num])
-    // TODO: suspendable trigger
-    setInterval(() => {
-      setNum(num.value + 1)
-    }, 1000)
+    const trigger = $trigger(() => setNum(num.value + 1))
+    $invoke(trigger, 1000)
+    $action(() => console.log(num.value))
+    const asyncNum = $async(num)
 
     return {
-      size: result,
+      size: asyncNum,
     }
   },
 }
@@ -77,12 +77,11 @@ const Squares: Config<Size.v1> = {
       })
 
     const [num, setNum] = $(1)
-    const filtered = $filter(n => n % 2 === 0, num)
-    const [result] = $action(f => someAsyncComputation(f), [filtered])
+    const trigger = $trigger(() => setNum(num.value + 1))
+    $invoke(trigger, 1000)
 
-    setInterval(() => {
-      setNum(num.value + 1)
-    }, 1000)
+    const filtered = $if(() => num.value % 2 === 0, num) // alias for { $then: () => num.value, $else: prev => prev, initialValue: num.value }
+    const [result] = $asyncAction(() => someAsyncComputation(filtered.value))
 
     return {
       size: result,
@@ -107,8 +106,7 @@ const Now: Config<Size.v1> = {
       })
 
     const [param] = $('minutes')
-    const [result, trigger] = $action(s => getDateFromAsyncApi(s), [param])
-
+    const [result, trigger] = $asyncAction(() => getDateFromAsyncApi(param.value))
     $invoke(trigger, 1000)
 
     return {

@@ -17,3 +17,7 @@ persist state (signals/gateway model across sessions) - rxdb; broadcast to sync 
 readonly signals - suspend updates
 config prefetching; bundling; module imports
 signal error handling
+debug mode flag
+sdlc (new config/template)
+hijack console logs
+sandbox config fns
