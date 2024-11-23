@@ -1,4 +1,4 @@
-import { Color, Size } from 'ds'
+import { Color, Listing, Size } from 'ds'
 import {
   $,
   $action,
@@ -56,7 +56,8 @@ const Numbers: Config<Size.v1> = {
   configFn: () => {
     const [num, setNum] = $(1)
     const trigger = $updater(() => setNum(num.value + 1))
-    $invoke(trigger, 1000)
+    $invoke(trigger, { interval: 1000 })
+
     $action(() => console.log(num.value))
     const asyncNum = $async(num)
 
@@ -78,9 +79,14 @@ const Squares: Config<Size.v1> = {
 
     const [num, setNum] = $(1)
     const trigger = $updater(() => setNum(num.value + 1))
-    $invoke(trigger, 1000)
+    $invoke(trigger, { interval: 1000 })
 
     const filtered = $if(() => num.value % 2 === 0, num) // alias for { $then: () => num.value, $else: prev => prev, initialValue: num.value }
+    // const filtered = $if(() => num.value % 2 === 0, {
+    //   initialValue: 0,
+    //   $then: () => num.value,
+    //   $else: () => -num.value,
+    // })
     const [result] = $asyncAction(() => someAsyncComputation(filtered.value))
 
     return {
@@ -105,12 +111,98 @@ const Now: Config<Size.v1> = {
         }, 500)
       })
 
-    const [param] = $('minutes')
-    const [result, trigger] = $asyncAction(() => getDateFromAsyncApi(param.value))
-    $invoke(trigger, 1000)
+    const [queryParam, setQueryParam] = $('minutes')
+    const queryParamTrigger = $updater(() =>
+      queryParam.value === 'minutes' ? setQueryParam('seconds') : setQueryParam('minutes'),
+    )
+    $invoke(queryParamTrigger, { interval: 4500 })
+    const [result, apiTrigger] = $asyncAction(() => getDateFromAsyncApi(queryParam.value))
+    $invoke(apiTrigger, { interval: 1000 })
 
     return {
       size: result,
+    }
+  },
+}
+
+const ListingExample: Config<Listing.v1> = {
+  schema: 'listing@1',
+  configFn: () => {
+    type Api = { id: number; name: string; value: number }
+
+    const mockApi = (() => {
+      const items: Api[] = []
+      let firstRun = true
+
+      return {
+        list: async () =>
+          new Promise<Api[]>(resolve => {
+            setTimeout(() => {
+              if (!firstRun) {
+                for (let i = 0; i < 100; i++) {
+                  const newItem = {
+                    id: items.length + 1,
+                    name: `Item ${items.length + 1}`,
+                    value: Math.floor(Math.random() * 1000),
+                  }
+                  items.push(newItem)
+                }
+              }
+              firstRun = false
+              resolve(JSON.parse(JSON.stringify([...items])))
+            }, 500)
+          }),
+      }
+    })()
+
+    const [result, apiTrigger] = $asyncAction(() => mockApi.list())
+    const stop = $invoke(apiTrigger, { interval: 1000 })
+    $invoke(stop, { delay: 5000 })
+
+    return {
+      items: result,
+      columns: () => ['id', 'name', 'value'],
+    }
+  },
+}
+
+const ListingExample2: Config<Listing.v1> = {
+  schema: 'listing@1',
+  configFn: () => {
+    type Api = { id: number; name: string; data: number }
+
+    const mockApi = (() => {
+      const items: Api[] = []
+      let firstRun = true
+
+      return {
+        list: async () =>
+          new Promise<Api[]>(resolve => {
+            setTimeout(() => {
+              if (!firstRun) {
+                for (let i = 0; i < 10; i++) {
+                  const newItem = {
+                    id: items.length + 1,
+                    name: `Cell ${items.length + 1}`,
+                    data: Math.floor(Math.random() * 1000),
+                  }
+                  items.push(newItem)
+                }
+              }
+              firstRun = false
+              resolve(JSON.parse(JSON.stringify([...items])))
+            }, 500)
+          }),
+      }
+    })()
+
+    const [result, apiTrigger] = $asyncAction(() => mockApi.list())
+    const stop = $invoke(apiTrigger, { interval: 1000 })
+    $invoke(stop, { delay: 5000 })
+
+    return {
+      items: result,
+      columns: () => ['id', 'name', 'data'],
     }
   },
 }
@@ -123,4 +215,6 @@ export const configRegistry: ConfigRegistry = {
   numbers: Numbers,
   squares: Squares,
   now: Now,
+  list: ListingExample,
+  list2: ListingExample2,
 }

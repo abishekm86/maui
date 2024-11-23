@@ -16,8 +16,12 @@ Display context (eg, parent, inline, modal)
 persist state (signals/gateway model across sessions) - rxdb; broadcast to sync tabs
 readonly signals - suspend updates
 config prefetching; bundling; module imports
-signal error handling
+
 debug mode flag
 sdlc (new config/template)
 hijack console logs
 sandbox config fns
+Implement Linting; Use eslint-plugin-perfectionist with recommended-natural; auto fix; remove @trivago/prettier-plugin-sort-imports and related changes in prettierrc
+
+signal error handling
+signal timeouts/retry
