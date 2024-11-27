@@ -15,7 +15,7 @@ export const template: Template<Color.v1> = function ({ color, colorText }) {
   return (
     <Typography variant="h4">
       <b>
-        <span style={{ color: color.value }}>{colorText.value}</span>
+        <span style={{ color: color() }}>{colorText()}</span>
       </b>
     </Typography>
   )

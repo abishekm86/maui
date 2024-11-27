@@ -1,14 +1,34 @@
-import { Signal, computed, effect, signal, untracked } from '@preact/signals'
+import { batch, computed, effect, signal, untracked } from '@preact/signals'
 
-import { AsyncState, State } from './types'
+import { AsyncState, SIGNAL_GETTER, State } from './types'
 import { defaultResult } from './utils'
 
 type Trigger = () => void
 type Dispose = () => void
 type ComputeFunction<O> = (abort?: AbortSignal) => O | Promise<O>
 
-export const $action = effect
-export const $compute = computed
+export const $batch = batch
+
+// Expose Signals using a combination of svelte rune syntax, with solidjs style getter and setter
+export function $state<T>(initialValue: T): [State<T>, (newValue: T) => void] {
+  const internalSignal = signal<T>(initialValue)
+
+  const getValue = createGetterWithProxy(() => internalSignal.value)
+
+  const setValue = (newValue: T) => {
+    internalSignal.value = newValue
+  }
+
+  return [getValue, setValue]
+}
+
+export function $computed<T>(computeFn: () => T): State<T> {
+  const getValue = createGetterWithProxy(computeFn)
+
+  return getValue
+}
+
+export const $effect = effect
 
 /**
  * Asynchronous action handler. Executes the provided function and returns its state.
@@ -16,20 +36,20 @@ export const $compute = computed
  * @param {ComputeFunction<O>} fn - The function to compute asynchronously.
  * @returns {[AsyncState<O>, Trigger]} A tuple of the async state and a trigger function.
  */
-export function $asyncAction<O>(fn: ComputeFunction<O>): [AsyncState<O>, Trigger] {
-  const [result, setResult] = $(defaultResult<O>())
-  const [loading, setLoading] = $(true)
-  const [refreshing, setRefreshing] = $(false)
-  const [triggerSignal, setTriggerSignal] = $(0)
+export function $asyncEffect<O>(fn: ComputeFunction<O>): [AsyncState<O>, Trigger] {
+  const [result, setResult] = $state(defaultResult<O>())
+  const [loading, setLoading] = $state(true)
+  const [refreshing, setRefreshing] = $state(false)
+  const [triggerSignal, setTriggerSignal] = $state(0)
   // TODO: add last updated time
 
   let computationId = 0
   let abortController: AbortController | null = null
 
-  const computedFn = $compute(() => fn)
+  const computedFn = $computed(() => fn)
 
-  $action(() => {
-    triggerSignal.value // Ensure effect depends on triggerSignal
+  effect(() => {
+    triggerSignal() // Ensure effect depends on triggerSignal
 
     computationId += 1
     const currentId = computationId
@@ -40,8 +60,7 @@ export function $asyncAction<O>(fn: ComputeFunction<O>): [AsyncState<O>, Trigger
 
     const compute = async () => {
       try {
-        const resultValue = await Promise.resolve(computedFn.value(abortController!.signal))
-
+        const resultValue = await Promise.resolve(computedFn()(abortController!.signal))
         // Update result only if computation matches current ID and value has changed
         // TODO: support custom equality check
         if (currentId === computationId && resultValue !== result.peek().value) {
@@ -49,14 +68,17 @@ export function $asyncAction<O>(fn: ComputeFunction<O>): [AsyncState<O>, Trigger
         }
       } catch (error: any) {
         if (error.name !== 'AbortError' && currentId === computationId) {
+          // TODO: should we reset to undefined?
           setResult({
-            value: result.peek().value, // TODO: should we reset to undefined?
+            value: result.peek().value,
             error: error instanceof Error ? error : new Error(String(error)),
           })
         }
       } finally {
-        setLoading(false)
-        setRefreshing(false)
+        $batch(() => {
+          setLoading(false)
+          setRefreshing(false)
+        })
       }
     }
 
@@ -64,7 +86,7 @@ export function $asyncAction<O>(fn: ComputeFunction<O>): [AsyncState<O>, Trigger
     compute()
   })
 
-  return [{ result, loading, refreshing }, () => setTriggerSignal(triggerSignal.value + 1)]
+  return [{ result, loading, refreshing }, () => setTriggerSignal(triggerSignal() + 1)]
 }
 
 /**
@@ -72,17 +94,17 @@ export function $asyncAction<O>(fn: ComputeFunction<O>): [AsyncState<O>, Trigger
  * @param {() => void} fn - The function to execute on trigger.
  * @returns {Trigger} A trigger function to manually control the effect.
  */
-export function $updater(fn: () => void): Trigger {
-  const [triggerSignal, setTriggerSignal] = $(0)
+export function $mutate(fn: () => void): Trigger {
+  const [triggerSignal, setTriggerSignal] = $state(0)
   let firstRun = true
 
-  $action(() => {
-    triggerSignal.value // Ensure effect depends on triggerSignal
+  effect(() => {
+    triggerSignal() // Ensure effect depends on triggerSignal
     if (!firstRun) untracked(fn) // run without subscribing to any signals referenced in fn
     firstRun = false
   })
 
-  return () => setTriggerSignal(triggerSignal.value + 1)
+  return () => setTriggerSignal(triggerSignal() + 1)
 }
 
 /**
@@ -127,18 +149,18 @@ export function $if<T>(condition: () => boolean, options: IfOptions<T> | State<T
   let setCachedSignal: (newValue: T) => void
   let conditionalValue: State<T>
 
-  if (options instanceof Signal) {
-    ;[cachedSignal, setCachedSignal] = $<T>(options.value)
-    conditionalValue = $compute(() => (condition() ? options.value : cachedSignal.value))
+  if (options instanceof Function) {
+    ;[cachedSignal, setCachedSignal] = $state<T>(options())
+    conditionalValue = $computed(() => (condition() ? options() : cachedSignal()))
   } else {
     const { initialValue, $then, $else = prev => prev } = options as IfOptions<T>
-    ;[cachedSignal, setCachedSignal] = $<T>(initialValue)
-    conditionalValue = $compute(() =>
+    ;[cachedSignal, setCachedSignal] = $state<T>(initialValue)
+    conditionalValue = $computed(() =>
       condition() ? $then(cachedSignal.peek()) : $else(cachedSignal.peek()),
     )
   }
 
-  $action(() => setCachedSignal(conditionalValue.value))
+  effect(() => setCachedSignal(conditionalValue()))
   return cachedSignal
 }
 
@@ -148,41 +170,82 @@ export function $if<T>(condition: () => boolean, options: IfOptions<T> | State<T
  * @param {State<T>} signal - The state signal to wrap.
  * @returns {AsyncState<T>} The async state representation.
  */
-export function $async<T>(signal: State<T>): AsyncState<T> {
-  const [result] = $asyncAction(() => signal.value)
+export function $asAsync<T>(signal: () => T): AsyncState<T> {
+  const [result] = $asyncEffect(() => signal())
   return result
 }
 
-/**
- * Signal utility that provides a value and a setter with immutability protections for objects.
- * @template T - The type of the signal.
- * @param {T} initialValue - The initial value of the signal.
- * @returns {[State<T>, (newValue: T) => void]} A tuple of the state and its setter.
- */
-export function $<T>(initialValue: T): [State<T>, (newValue: T) => void] {
-  const internalSignal = signal<T>(initialValue)
-
-  const readonlySignal = $compute(() => {
-    const value = internalSignal.value
+// Return an immutable wrapper to prevent unintended mutation outside reactive chain
+function createGetterWithProxy<T>(computeFn: () => T): State<T> & { [SIGNAL_GETTER]: true } {
+  const computedSignal = computed(() => {
+    const value = computeFn()
 
     if (typeof value === 'object' && value !== null) {
-      return new Proxy(value as T & object, {
-        get(target, prop, receiver) {
-          return Reflect.get(target, prop, receiver)
-        },
-        set(_target, prop) {
-          console.warn(`Attempt to modify property '${String(prop)}' is not allowed.`)
-          return true // TODO: return false in dev mode
-        },
-      })
+      if (Array.isArray(value)) {
+        // Create a Proxy specifically for arrays
+        return new Proxy(value as unknown as T & any[], arrayProxyHandler)
+      } else {
+        // Create a Proxy for objects
+        return new Proxy(value as T & object, objectProxyHandler)
+      }
     } else {
       return value
     }
   })
 
-  const setValue = (newValue: T) => {
-    internalSignal.value = newValue
-  }
+  const getValue = () => computedSignal.value
 
-  return [readonlySignal, setValue]
+  getValue.peek = () => computedSignal.peek()
+  getValue[SIGNAL_GETTER] = true
+
+  return getValue as State<T> & { [SIGNAL_GETTER]: true }
+}
+
+const objectProxyHandler: ProxyHandler<object> = {
+  get(target, prop, receiver) {
+    return Reflect.get(target, prop, receiver)
+  },
+  set(_target, prop) {
+    console.warn(`Attempt to modify property '${String(prop)}' is not allowed.`)
+    return true // TODO: return false in dev mode
+  },
+}
+
+const arrayProxyHandler: ProxyHandler<any[]> = {
+  get(target, prop, receiver) {
+    const value = Reflect.get(target, prop, receiver)
+
+    if (typeof value === 'function') {
+      // If it's a function (method), check if it's a mutating method
+      return function (...args: any[]) {
+        const mutatingMethods = [
+          'copyWithin',
+          'fill',
+          'pop',
+          'push',
+          'reverse',
+          'shift',
+          'sort',
+          'splice',
+          'unshift',
+          // And any other mutating methods
+        ]
+
+        if (mutatingMethods.includes(prop as string)) {
+          console.warn(`Attempt to modify array using method '${String(prop)}' is not allowed.`)
+          return receiver // Return the proxy itself to maintain chainability
+        } else {
+          // For non-mutating methods, call the method normally
+          return value.apply(target, args)
+        }
+      }
+    } else {
+      // For non-function properties, return the value
+      return value
+    }
+  },
+  set(_target, prop) {
+    console.warn(`Attempt to modify property '${String(prop)}' is not allowed.`)
+    return true // TODO: return false in dev mode
+  },
 }

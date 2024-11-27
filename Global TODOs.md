@@ -25,3 +25,6 @@ Implement Linting; Use eslint-plugin-perfectionist with recommended-natural; aut
 
 signal error handling
 signal timeouts/retry
+
+Editable Templates
+Template release cycle - alpha, beta, etc

@@ -12,5 +12,5 @@ export const metadata: Metadata<Color.v1> = {
 }
 
 export const template: Template<Color.v1> = function ({ color }) {
-  return <Box style={{ backgroundColor: color.value, padding: '24px' }} />
+  return <Box style={{ backgroundColor: color(), padding: '24px' }} />
 }

@@ -3,17 +3,26 @@ import ArrowBackIos from '@mui/icons-material/ArrowBackIos'
 import ArrowForwardIos from '@mui/icons-material/ArrowForwardIos'
 import { IconButton, MenuItem, Select, Typography } from '@mui/material'
 import { makeStyles } from '@mui/styles'
-import { $, $compute, AsyncValue, ProcessedConfig, Schema, Template, Value } from 'maui-core'
-// import { memo } from 'preact/compat'
-import { useEffect, useRef } from 'preact/hooks'
-import { FixedSizeList } from 'react-window'
-import { Listing } from 'src/schemas'
+import {
+  $batch,
+  $computed,
+  $effect,
+  $state,
+  AsyncValue,
+  ProcessedConfig,
+  Schema,
+  Template,
+} from 'maui-core'
+import { memo } from 'preact/compat'
+import { useRef } from 'preact/hooks'
+import { FixedSizeList, areEqual } from 'react-window'
+import { Column, Listing } from 'src/schemas'
 import { Metadata, TemplateFeatures } from 'src/types'
 
 // Update TemplateProps to match the new schema
 interface TemplateProps extends Schema<'listing@1'> {
   items: Required<AsyncValue<Record<string, any>[]>>
-  columns: Value<string[]>
+  columns: Column[]
 }
 
 // Update metadata to use ItemList.v1
@@ -48,12 +57,12 @@ const useStyles = makeStyles(() => ({
   gridHeader: (props: any) => ({
     display: 'grid',
     width: '100%',
-    gridTemplateColumns: `repeat(${props.columns.value.length}, 1fr)`,
+    gridTemplateColumns: `repeat(${props.columns.length}, 1fr)`,
   }),
   gridRow: (props: any) => ({
     display: 'grid',
     width: '100%',
-    gridTemplateColumns: `repeat(${props.columns.value.length}, 1fr)`,
+    gridTemplateColumns: `repeat(${props.columns.length}, 1fr)`,
     boxSizing: 'border-box',
     borderBottom: '1px solid rgba(224, 224, 224, 1)',
   }),
@@ -97,20 +106,18 @@ const Table = function (props: ProcessedConfig<TemplateProps>) {
   const itemsPerPage = 10
   const rowHeight = tableHeight / itemsPerPage
 
-  // these are signals, since their values are rendered
-  const [currentPage, setCurrentPage] = $(1)
-  const currentPageStartIndex = $compute(() => (currentPage.value - 1) * itemsPerPage)
-  const totalPages = $compute(() => Math.ceil((result.value.value?.length || 0) / itemsPerPage))
-  const [shouldResetToTop, resetToTop] = $(false)
+  const [currentPage, setCurrentPage] = $state(1)
+  const currentPageStartIndex = $computed(() => (currentPage() - 1) * itemsPerPage)
+  const totalPages = $computed(() => Math.ceil((result().value?.length || 0) / itemsPerPage))
+  const [isPageChangeFromPagination, setIsPageChangeFromPagination] = $state(false)
+  const [isScrollingProgrammatically, setIsScrollingProgramatically] = $state(false)
+  const [visibleStartIndex, setVisibileStartIndex] = $state(0)
 
   const listRef = useRef<FixedSizeList>(null)
-  const isPageChangeFromPagination = useRef(false)
-  const isScrollingProgrammatically = useRef(false)
-  const visibleStartIndexRef = useRef(0)
 
   const createMessageRow = (message?: string) => (
     <div className={classes.gridRow}>
-      <div className={classes.gridCell} style={{ gridColumn: `1 / span ${columns.value.length}` }}>
+      <div className={classes.gridCell} style={{ gridColumn: `1 / span ${columns.length}` }}>
         <Typography variant="body1">{message || <>&nbsp;</>}</Typography>
       </div>
     </div>
@@ -118,53 +125,54 @@ const Table = function (props: ProcessedConfig<TemplateProps>) {
 
   const THeader = () => (
     <div className={classes.gridHeader}>
-      {columns.value.map(column => (
-        <div key={column} className={classes.gridCell}>
-          <Typography variant="h6">{column}</Typography>
+      {columns.map(column => (
+        <div key={column.name()} className={classes.gridCell}>
+          <Typography variant="h6">{column.label()}</Typography>
         </div>
       ))}
     </div>
   )
 
   const TBody = () => {
-    const rows = result.value.value || []
-    if (loading.value) return createMessageRow('Loading...')
+    const rows = result().value || []
+    if (loading()) return createMessageRow('Loading...')
     if (rows.length === 0) return createMessageRow('Nothing to see here...')
 
     // Update currentPage based on scroll position
     const onItemsRendered = ({ visibleStartIndex, visibleStopIndex }) => {
-      visibleStartIndexRef.current = visibleStartIndex
-
-      if (!isScrollingProgrammatically.current) {
+      setVisibileStartIndex(visibleStartIndex)
+      if (!isScrollingProgrammatically()) {
         const middleIndex = Math.floor((visibleStartIndex + visibleStopIndex) / 2)
         const newPage = Math.floor(middleIndex / itemsPerPage) + 1
-        if (newPage !== currentPage.value) {
+        if (newPage !== currentPage()) {
           setCurrentPage(newPage)
         }
       }
     }
 
-    // Scroll to the item corresponding to the current page when currentPage changes via pagination
-    useEffect(() => {
-      if (isPageChangeFromPagination.current) {
-        const index = (currentPage.value - 1) * itemsPerPage
-        isScrollingProgrammatically.current = true
+    // Scroll to the item corresponding to the current page set via pagination
+    $effect(() => {
+      if (isPageChangeFromPagination()) {
+        const index = (currentPage() - 1) * itemsPerPage
+
+        setIsScrollingProgramatically(true)
         listRef.current?.scrollToItem(index, 'start')
         setTimeout(() => {
-          isScrollingProgrammatically.current = false
+          setIsScrollingProgramatically(false)
         }, 100) // Adjust timeout as needed
-        isPageChangeFromPagination.current = false
-        resetToTop(false)
+        setIsPageChangeFromPagination(false)
       }
-    }, [currentPage.value, shouldResetToTop.value])
+    })
 
     const Row = ({ index, style }) => {
       const row = rows[index]
       return (
         <div style={{ ...style }} className={classes.gridRow}>
-          {columns.value.map(column => (
-            <div key={column} className={classes.gridCell}>
-              <Typography variant="body1">{row[column]}</Typography>
+          {columns.map(column => (
+            <div key={column.name()} className={classes.gridCell}>
+              <Typography variant="body1">
+                {column.cell ? column.cell() : row[column.name()]}
+              </Typography>
             </div>
           ))}
         </div>
@@ -181,65 +189,69 @@ const Table = function (props: ProcessedConfig<TemplateProps>) {
           width="100%"
           onItemsRendered={onItemsRendered}
         >
-          {Row}
+          {memo(Row, areEqual)}
         </FixedSizeList>
       </div>
     )
   }
 
   const handlePrevious = () => {
-    if (currentPage.value <= 1) return
+    if (currentPage() <= 1) return
 
-    isPageChangeFromPagination.current = true
-    if (currentPageStartIndex.value >= visibleStartIndexRef.current) {
-      setCurrentPage(currentPage.value - 1)
+    if (currentPageStartIndex() >= visibleStartIndex()) {
+      $batch(() => {
+        setIsPageChangeFromPagination(true)
+        setCurrentPage(currentPage() - 1)
+      })
     } else {
-      resetToTop(true)
+      // move page to top of current page without changing page
+      setIsPageChangeFromPagination(true)
     }
   }
 
   const handleNext = () => {
-    if (currentPage.value >= totalPages.value) return
+    if (currentPage() >= totalPages()) return
 
-    isPageChangeFromPagination.current = true
-    if (currentPageStartIndex.value <= visibleStartIndexRef.current) {
-      setCurrentPage(currentPage.value + 1)
+    if (currentPageStartIndex() <= visibleStartIndex()) {
+      $batch(() => {
+        setIsPageChangeFromPagination(true)
+        setCurrentPage(currentPage() + 1)
+      })
     } else {
-      resetToTop(true)
+      // move page to top of current page without changing page
+      setIsPageChangeFromPagination(true)
     }
   }
 
   const Pagination = () => (
     <>
-      {totalPages.value > 0 && (
+      {totalPages() > 0 && (
         <div className={classes.pagination}>
-          <IconButton disabled={currentPage.value <= 1} onClick={handlePrevious} size="small">
+          <IconButton disabled={currentPage() <= 1} onClick={handlePrevious} size="small">
             <ArrowBackIos fontSize="small" />
           </IconButton>
           <Typography variant="body1">Page</Typography>
           <Select
-            value={currentPage.value}
+            value={currentPage()}
             onChange={e => {
-              isPageChangeFromPagination.current = true
               const target = e.target as HTMLSelectElement
-              setCurrentPage(Number(target.value))
+              $batch(() => {
+                setIsPageChangeFromPagination(true)
+                setCurrentPage(Number(target.value))
+              })
             }}
             variant="standard"
             size="small"
             className={classes.pageSelect}
           >
-            {Array.from({ length: totalPages.value }, (_, i) => i + 1).map(page => (
+            {Array.from({ length: totalPages() }, (_, i) => i + 1).map(page => (
               <MenuItem key={page} value={page}>
                 {page}
               </MenuItem>
             ))}
           </Select>
-          <Typography variant="body1">of {totalPages.value}</Typography>
-          <IconButton
-            disabled={currentPage.value >= totalPages.value}
-            onClick={handleNext}
-            size="small"
-          >
+          <Typography variant="body1">of {totalPages()}</Typography>
+          <IconButton disabled={currentPage() >= totalPages()} onClick={handleNext} size="small">
             <ArrowForwardIos fontSize="small" />
           </IconButton>
         </div>
@@ -249,7 +261,7 @@ const Table = function (props: ProcessedConfig<TemplateProps>) {
 
   const TFooter = () => (
     <div className={classes.footer}>
-      {createMessageRow(refreshing.value ? 'Refreshing' : undefined)}
+      {createMessageRow(refreshing() ? 'Refreshing' : undefined)}
       <Pagination />
     </div>
   )

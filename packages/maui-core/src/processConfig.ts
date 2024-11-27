@@ -1,8 +1,7 @@
-import { Signal, computed, signal } from '@preact/signals'
-
 // import { ProcessedConfig } from './types'
 import { withCache } from './cache'
-import { ProcessedConfig, Schema } from './types'
+import { $computed } from './filaments'
+import { ProcessedConfig, SIGNAL_GETTER, Schema } from './types'
 
 // TODO: BUG: cache key based on template id as well, since transforms are template specific
 export const processConfig = withCache(processConfigInternal, {
@@ -16,7 +15,7 @@ function processConfigInternal<T extends Schema<string>, P extends Schema<T['sch
   transformFn?: (config: Omit<T, 'schema'>) => any,
 ): ProcessedConfig<P> {
   const config = configFn()
-  // TODO: evaluate expressions first before transformation to simplify tranforming the input config
+  // TODO: evaluate expressions first before transformation to simplify tranforming the input config?
   const transformedConfig = transformFn ? transformFn(config) : config
   const evaluatedConfig = evaluateExpressionsToSignals(transformedConfig)
   return evaluatedConfig
@@ -24,14 +23,16 @@ function processConfigInternal<T extends Schema<string>, P extends Schema<T['sch
 
 function evaluateExpressionsToSignals(configValue: any): any {
   if (typeof configValue === 'function') {
-    // Function: Evaluate and wrap in a signal
-    return computed(() => (configValue as Function)())
-  } else if (configValue instanceof Signal) {
-    // Signal: Return as is
-    return configValue
+    if ((configValue as any)[SIGNAL_GETTER]) {
+      // **configValue is a signal getter, use it directly**
+      return configValue
+    } else {
+      // Function: Evaluate and wrap in a computed signal
+      return $computed(() => (configValue as Function)())
+    }
   } else if (Array.isArray(configValue)) {
     // Array: Process each element recursively
-    return [] // TODO: support arrays
+    return configValue.map(item => evaluateExpressionsToSignals(item))
   } else if (typeof configValue === 'object' && configValue !== null) {
     // Object: Process properties recursively
     const evaluatedObject: any = {}
@@ -40,7 +41,6 @@ function evaluateExpressionsToSignals(configValue: any): any {
     }
     return evaluatedObject
   } else {
-    // Primitive value: Wrap in a signal
-    return signal(configValue) // TODO: can we get away with returning just ({ value: configValue })
+    return () => configValue
   }
 }

@@ -18,4 +18,6 @@ declare module 'react-window' {
   export class FixedSizeList extends React.Component<FixedSizeListProps> {
     scrollToItem(index: number, align?: 'auto' | 'smart' | 'center' | 'end' | 'start'): void
   }
+
+  export function areEqual(prevProps: any, nextProps: any): boolean
 }

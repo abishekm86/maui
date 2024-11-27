@@ -30,12 +30,12 @@ export const DetailedComponent = function ({
   loading,
 }: ProcessedConfig<TemplateProps['size']>) {
   const AsyncIndicator = () => (
-    <span>{refreshing.value ? 'refreshing...' : loading.value ? 'loading...' : <br />}</span>
+    <span>{refreshing() ? 'refreshing...' : loading() ? 'loading...' : <br />}</span>
   )
   return (
     <div>
       <Typography variant="h4">
-        Value: <b>{loading.value ? '-' : (result.value.value ?? NaN)}</b>
+        Value: <b>{loading() ? '-' : (result().value ?? NaN)}</b>
       </Typography>
       <AsyncIndicator />
     </div>
@@ -51,8 +51,8 @@ export const SummaryComponent = function ({
     <div>
       <Typography variant="h4">
         <b>
-          <span style={{ color: refreshing.value ? '#ff0000' : '#000000' }}>
-            {loading.value ? '-' : (result.value.value ?? NaN)}
+          <span style={{ color: refreshing() ? '#ff0000' : '#000000' }}>
+            {loading() ? '-' : (result().value ?? NaN)}
           </span>
         </b>
       </Typography>

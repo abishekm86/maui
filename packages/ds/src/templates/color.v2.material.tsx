@@ -26,15 +26,14 @@ export const metadata: Metadata<Color.v2, TemplateProps> = {
 
 export const template: Template<TemplateProps, TemplateFeatures> = function (props, features) {
   const { color, colorText, heading } = props
-
   if (features?.density === 'summary') {
-    return <Box style={{ backgroundColor: color.value, padding: '24px' }} />
+    return <Box style={{ backgroundColor: color(), padding: '24px' }} />
   } else {
     return (
       <Typography variant="h4">
-        {`${heading.value}: `}
-        <span style={{ color: color.value }}>
-          <b>{colorText.value}</b>
+        {`${heading()}: `}
+        <span style={{ color: color() }}>
+          <b>{colorText()}</b>
         </span>
       </Typography>
     )

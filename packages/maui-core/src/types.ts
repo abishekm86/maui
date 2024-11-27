@@ -1,4 +1,3 @@
-import { ReadonlySignal } from '@preact/signals'
 import { VNode } from 'preact'
 
 export type Schema<T extends string> = {
@@ -83,7 +82,12 @@ ProcessedConfig<Value<string>> should be { a?: State<string>, ... }
 ProcessedConfig<Async<string>> should be { a?: { loading: State<boolean>, ... }, ... }
 ProcessedConfig<Value<Async<string>>> should be { a?: State<Async<string>>, ... }
 */
-export type State<T> = ReadonlySignal<T>
+export type State<T> = {
+  (): T
+  peek: () => T
+}
+
+export const SIGNAL_GETTER = Symbol('Signal Getter')
 
 export interface AsyncState<T> {
   result: State<Result<T>>
