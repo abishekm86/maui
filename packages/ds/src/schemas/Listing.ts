@@ -8,7 +8,7 @@ export interface Column {
 
 export namespace Listing {
   export interface v1 extends Schema<'listing@1'> {
-    items: AsyncValue<Record<string, any>[]>
+    items: AsyncValue<Value<Record<string, any>>[]>
     columns: Column[]
   }
 }

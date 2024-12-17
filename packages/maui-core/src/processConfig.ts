@@ -1,7 +1,7 @@
 // import { ProcessedConfig } from './types'
 import { withCache } from './cache'
-import { $computed } from './filaments'
-import { ProcessedConfig, SIGNAL_GETTER, Schema } from './types'
+import { $computed } from './threads/signals'
+import { IS_SIGNAL, ProcessedConfig, Schema } from './types'
 
 // TODO: BUG: cache key based on template id as well, since transforms are template specific
 export const processConfig = withCache(processConfigInternal, {
@@ -23,7 +23,7 @@ function processConfigInternal<T extends Schema<string>, P extends Schema<T['sch
 
 function evaluateExpressionsToSignals(configValue: any): any {
   if (typeof configValue === 'function') {
-    if ((configValue as any)[SIGNAL_GETTER]) {
+    if ((configValue as any)[IS_SIGNAL]) {
       // **configValue is a signal getter, use it directly**
       return configValue
     } else {

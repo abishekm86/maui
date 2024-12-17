@@ -12,6 +12,7 @@ import {
   ProcessedConfig,
   Schema,
   Template,
+  Value,
 } from 'maui-core'
 import { memo } from 'preact/compat'
 import { useRef } from 'preact/hooks'
@@ -21,7 +22,7 @@ import { Metadata, TemplateFeatures } from 'src/types'
 
 // Update TemplateProps to match the new schema
 interface TemplateProps extends Schema<'listing@1'> {
-  items: Required<AsyncValue<Record<string, any>[]>>
+  items: Required<AsyncValue<Value<Record<string, any>>[]>>
   columns: Column[]
 }
 
@@ -39,6 +40,7 @@ export const metadata: Metadata<Listing.v1, TemplateProps> = {
         ...config.items,
         loading: config.items.loading ?? false,
         refreshing: config.items.refreshing ?? false,
+        error: config.items.error ?? null,
       },
     }
   },
@@ -77,29 +79,33 @@ const useStyles = makeStyles(() => ({
     overflowY: 'auto',
     height: '100%',
   },
-  footer: {
+  message: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    marginTop: '8px',
   },
   pagination: {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: '8px',
   },
   pageSelect: {
     marginLeft: '4px',
     marginRight: '4px',
     marginTop: '4px',
   },
+  footer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: '8px', // Optional: Adjust spacing if needed
+  },
 }))
 
 const Table = function (props: ProcessedConfig<TemplateProps>) {
   const classes = useStyles(props)
   const {
-    items: { loading, refreshing, result },
+    items: { loading, refreshing, value },
     columns,
   } = props
   const tableHeight = 400
@@ -108,7 +114,7 @@ const Table = function (props: ProcessedConfig<TemplateProps>) {
 
   const [currentPage, setCurrentPage] = $state(1)
   const currentPageStartIndex = $computed(() => (currentPage() - 1) * itemsPerPage)
-  const totalPages = $computed(() => Math.ceil((result().value?.length || 0) / itemsPerPage))
+  const totalPages = $computed(() => Math.ceil((value()?.length || 0) / itemsPerPage))
   const [isPageChangeFromPagination, setIsPageChangeFromPagination] = $state(false)
   const [isScrollingProgrammatically, setIsScrollingProgramatically] = $state(false)
   const [visibleStartIndex, setVisibileStartIndex] = $state(0)
@@ -116,10 +122,8 @@ const Table = function (props: ProcessedConfig<TemplateProps>) {
   const listRef = useRef<FixedSizeList>(null)
 
   const createMessageRow = (message?: string) => (
-    <div className={classes.gridRow}>
-      <div className={classes.gridCell} style={{ gridColumn: `1 / span ${columns.length}` }}>
-        <Typography variant="body1">{message || <>&nbsp;</>}</Typography>
-      </div>
+    <div className={classes.message}>
+      <Typography variant="body1">{message || <>&nbsp;</>}</Typography>
     </div>
   )
 
@@ -134,7 +138,7 @@ const Table = function (props: ProcessedConfig<TemplateProps>) {
   )
 
   const TBody = () => {
-    const rows = result().value || []
+    const rows = value() || []
     if (loading()) return createMessageRow('Loading...')
     if (rows.length === 0) return createMessageRow('Nothing to see here...')
 
@@ -165,7 +169,7 @@ const Table = function (props: ProcessedConfig<TemplateProps>) {
     })
 
     const Row = ({ index, style }) => {
-      const row = rows[index]
+      const row = rows[index]()
       return (
         <div style={{ ...style }} className={classes.gridRow}>
           {columns.map(column => (
@@ -223,6 +227,40 @@ const Table = function (props: ProcessedConfig<TemplateProps>) {
     }
   }
 
+  const handleDropdown = e => {
+    const target = e.target as HTMLSelectElement
+    $batch(() => {
+      setIsPageChangeFromPagination(true)
+      setCurrentPage(Number(target.value))
+    })
+  }
+
+  // Helper to get an array [1 2 ... n]
+  const range = (start: number, end: number) => {
+    const len = end - start + 1
+    let range = Array(len)
+    for (let i = 0; i < len; i++) {
+      range[i] = i + start
+    }
+    return range
+  }
+
+  const PageSelector = () => (
+    <Select
+      value={currentPage()}
+      onChange={handleDropdown}
+      variant="standard"
+      size="small"
+      className={classes.pageSelect}
+    >
+      {range(1, totalPages()).map(page => (
+        <MenuItem key={page} value={page}>
+          {page}
+        </MenuItem>
+      ))}
+    </Select>
+  )
+
   const Pagination = () => (
     <>
       {totalPages() > 0 && (
@@ -230,27 +268,11 @@ const Table = function (props: ProcessedConfig<TemplateProps>) {
           <IconButton disabled={currentPage() <= 1} onClick={handlePrevious} size="small">
             <ArrowBackIos fontSize="small" />
           </IconButton>
-          <Typography variant="body1">Page</Typography>
-          <Select
-            value={currentPage()}
-            onChange={e => {
-              const target = e.target as HTMLSelectElement
-              $batch(() => {
-                setIsPageChangeFromPagination(true)
-                setCurrentPage(Number(target.value))
-              })
-            }}
-            variant="standard"
-            size="small"
-            className={classes.pageSelect}
-          >
-            {Array.from({ length: totalPages() }, (_, i) => i + 1).map(page => (
-              <MenuItem key={page} value={page}>
-                {page}
-              </MenuItem>
-            ))}
-          </Select>
-          <Typography variant="body1">of {totalPages()}</Typography>
+          <>
+            <Typography variant="body1">Page</Typography>
+            <PageSelector />
+            <Typography variant="body1">of {totalPages()}</Typography>
+          </>
           <IconButton disabled={currentPage() >= totalPages()} onClick={handleNext} size="small">
             <ArrowForwardIos fontSize="small" />
           </IconButton>

@@ -55,13 +55,9 @@ type Primitive = string | number | boolean | bigint | symbol
 
 export type Value<T> = [T] extends [Primitive] ? T | Fn<T> | State<T> : Fn<T> | State<T>
 
-export interface Result<T> {
-  value?: T
-  error?: Error | null
-}
-
 export interface AsyncValue<T> {
-  result: Value<Result<T>>
+  value: Value<T | undefined>
+  error?: Value<Error | null | undefined>
   loading?: Value<boolean>
   refreshing?: Value<boolean>
 }
@@ -85,15 +81,38 @@ ProcessedConfig<Value<Async<string>>> should be { a?: State<Async<string>>, ... 
 export type State<T> = {
   (): T
   peek: () => T
+  [IS_SIGNAL]: true
 }
 
-export const SIGNAL_GETTER = Symbol('Signal Getter')
+export const IS_SIGNAL = Symbol('Signal Getter')
+
+export type Chainable<T> = {
+  then<U>(fn: (value: T) => U): State<U> & Chainable<U>
+  do(fn: (value: T) => void): State<T> & Chainable<T>
+}
+
+export type ChainableState<T> = State<T> & Chainable<T>
+
+export type ArrayState<T, K> = {
+  length: () => number
+  keys: () => K[]
+  get: (key: K) => T | undefined
+  at: (index: number) => T | undefined
+  set: (items: T[]) => void
+}
+
+interface ChainableAsync<T> {
+  then<U>(fn: (value: T | undefined) => U): ChainableAsyncState<U>
+}
 
 export interface AsyncState<T> {
-  result: State<Result<T>>
-  loading?: State<boolean>
-  refreshing?: State<boolean>
+  value: ChainableState<T | undefined>
+  error?: ChainableState<Error | null | undefined>
+  loading?: ChainableState<boolean>
+  refreshing?: ChainableState<boolean>
 }
+
+export type ChainableAsyncState<T> = AsyncState<T> & ChainableAsync<T>
 
 type IsValue<T> = [T] extends [Value<infer _U>] ? true : false
 
