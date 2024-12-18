@@ -55,6 +55,6 @@ export function TemplateRenderer({
   const { template, metadata } = templateModule
   const processedConfig = processConfig(id, config.configFn, metadata?.transform)
 
-  // TODO: cache this
-  return template!(processedConfig, requestedFeatures)
+  // TODO: cache this?
+  return template!(processedConfig, requestedFeatures || {})
 }

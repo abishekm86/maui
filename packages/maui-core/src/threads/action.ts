@@ -1,6 +1,6 @@
-import { batch, effect, untracked } from '@preact/signals'
+import { batch } from '@preact/signals'
 
-import { Trigger, createTrigger } from './utils'
+import { Trigger } from '../types'
 
 type Dispose = () => void
 
@@ -10,12 +10,7 @@ type Dispose = () => void
  * @returns {Trigger} A trigger function to manually control the effect.
  */
 export function $action(fn: () => void): Trigger {
-  const [triggerSignal, trigger] = createTrigger()
-
-  effect(() => {
-    // Run only if triggered
-    if (triggerSignal.value > 0) batch(() => untracked(fn)) // run without subscribing to any signals referenced in fn
-  })
+  const trigger = () => batch(fn) // Batch updates inside the trigger
 
   return trigger
 }
@@ -30,14 +25,17 @@ export function $action(fn: () => void): Trigger {
  */
 export function $invoke(
   trigger: Trigger,
-  options?: { interval?: number; delay?: number },
+  options?: { interval?: number; delay?: number; stopAfter?: number }, // TODO: support startAfter, startWhen, stopWhen, restart
 ): Dispose {
-  // TODO: batch invocations
-  if (options?.interval !== undefined) {
-    const intervalId = setInterval(trigger, options.interval)
-    return () => clearInterval(intervalId)
-  } else if (options?.delay !== undefined) {
-    setTimeout(trigger, options.delay)
+  const { interval, delay, stopAfter = 0 } = options || {}
+  // TODO: create an event loop to sync and batch invocations
+  if (interval !== undefined) {
+    const intervalId = setInterval(trigger, interval)
+    const stop = () => clearInterval(intervalId)
+    if (stopAfter > 0) setTimeout(stop, stopAfter)
+    return stop
+  } else if (delay !== undefined) {
+    setTimeout(trigger, delay)
     return () => {}
   } else {
     trigger()

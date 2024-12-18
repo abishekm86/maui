@@ -19,7 +19,7 @@ export const metadata: Metadata<Greeting.v1, TemplateProps> = {
         ...config.message,
         loading: config.message.loading ?? false,
         refreshing: config.message.refreshing ?? false,
-        error: config.message.error ?? null,
+        error: config.message.error ?? (() => null),
       },
     }
   },
@@ -31,24 +31,27 @@ export const DetailedComponent = function ({
   loading,
 }: ProcessedConfig<TemplateProps['message']>) {
   const [show, setShow] = $state(true)
+  const [show2, setShow2] = $state(false)
 
-  const handleClick = () => {
+  const handleClick = (setShow, show) => {
     setShow(!show())
   }
 
-  const Button = () => (
-    <button onClick={handleClick}>{show() ? 'Hide Message' : 'Show Message'}</button>
+  const Button = ({ show, setShow }) => (
+    <button onClick={() => handleClick(setShow, show)}>
+      {show() ? 'Hide Message' : 'Show Message'}
+    </button>
   )
   const AsyncIndicator = () => (
     <span>{loading() ? 'loading...' : refreshing() ? 'refreshing...' : <br />}</span>
   )
 
-  const Display = () => (
+  const Display = ({ show }) => (
     <>
       {show() && (
         <div>
-          <Typography variant="h5">
-            Message: <b>{value() ?? '-'}</b>
+          <Typography variant="h6">
+            Message: <b>{value() ?? ''}</b>
           </Typography>
           <AsyncIndicator />
         </div>
@@ -58,8 +61,11 @@ export const DetailedComponent = function ({
 
   return (
     <>
-      <Button />
-      <Display />
+      <Button show={show} setShow={setShow} />
+      <Display show={show} />
+      <br />
+      <Button show={show2} setShow={setShow2} />
+      <Display show={show2} />
     </>
   )
 }
@@ -74,7 +80,7 @@ export const SummaryComponent = function ({
       <Typography variant="h4">
         <b>
           <span style={{ color: refreshing() ? '#ff0000' : '#000000' }}>
-            {loading() ? '-' : (value() ?? '-')}
+            {loading() ? 'Loading...' : (value() ?? '')}
           </span>
         </b>
       </Typography>
@@ -88,7 +94,7 @@ export const template: Template<TemplateProps, TemplateFeatures> = function (
 ) {
   return (
     <>
-      <Typography variant="h6">Hello world.. this shouldn't rerender</Typography>
+      <Typography variant="h6">this shouldn't rerender</Typography>
       {features?.density === 'summary' ? (
         // Tip: Dereferencing value will cause the containing component to renrender to change. Don't do this:
         // <Typography variant="h4">{size.value.value}</Typography>
@@ -97,7 +103,7 @@ export const template: Template<TemplateProps, TemplateFeatures> = function (
       ) : (
         <DetailedComponent {...message} />
       )}
-      <Typography variant="h6">And neither should this...</Typography>
+      <Typography variant="h6">...and neither should this</Typography>
     </>
   )
 }

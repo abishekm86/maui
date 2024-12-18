@@ -22,7 +22,7 @@ export type TemplateMetadata<
 export type Template<
   T extends Schema<string>,
   F extends Record<string, string> = Record<string, string>,
-> = (props: ProcessedConfig<T>, requestedFeatures?: F) => VNode
+> = (props: ProcessedConfig<T>, requestedFeatures: F) => VNode
 
 export type BaseConfig = Config<Schema<string>>
 
@@ -56,8 +56,8 @@ type Primitive = string | number | boolean | bigint | symbol
 export type Value<T> = [T] extends [Primitive] ? T | Fn<T> | State<T> : Fn<T> | State<T>
 
 export interface AsyncValue<T> {
-  value: Value<T | undefined>
-  error?: Value<Error | null | undefined>
+  value: Value<T>
+  error?: Value<Error | null>
   loading?: Value<boolean>
   refreshing?: Value<boolean>
 }
@@ -86,9 +86,12 @@ export type State<T> = {
 
 export const IS_SIGNAL = Symbol('Signal Getter')
 
+export type AsyncFn<T> = (signal: AbortSignal) => Promise<T>
+
 export type Chainable<T> = {
-  then<U>(fn: (value: T) => U): State<U> & Chainable<U>
-  do(fn: (value: T) => void): State<T> & Chainable<T>
+  transform<U>(fn: (value: T) => U): ChainableState<U>
+  // do(fn: (value: T) => void): ChainableState<T>
+  await<U>(fn: (value: T, signal: AbortSignal) => Promise<U>): ChainableAsyncState<U | undefined>
 }
 
 export type ChainableState<T> = State<T> & Chainable<T>
@@ -102,36 +105,29 @@ export type ArrayState<T, K> = {
 }
 
 interface ChainableAsync<T> {
-  then<U>(fn: (value: T | undefined) => U): ChainableAsyncState<U>
+  transform<U>(fn: (value: T) => U): ChainableAsyncState<U>
 }
 
 export interface AsyncState<T> {
-  value: ChainableState<T | undefined>
-  error?: ChainableState<Error | null | undefined>
-  loading?: ChainableState<boolean>
-  refreshing?: ChainableState<boolean>
+  value: ChainableState<T>
+  error: ChainableState<Error | null>
+  loading: ChainableState<boolean>
+  refreshing: ChainableState<boolean>
+  refresh: Trigger
 }
 
 export type ChainableAsyncState<T> = AsyncState<T> & ChainableAsync<T>
+
+export type Trigger = () => void
 
 type IsValue<T> = [T] extends [Value<infer _U>] ? true : false
 
 export type ProcessedConfig<T> = {
   [K in keyof T]: IsValue<Exclude<T[K], undefined>> extends true
     ? Exclude<T[K], undefined> extends Value<infer U>
-      ? State<Exclude<U, undefined | Fn<U> | State<U>>>
+      ? State<Exclude<U, Fn<U> | State<U>>>
       : never
-    : Exclude<T[K], undefined> extends object
+    : Exclude<T[K], undefined> extends object //  TODO: does this support arrays?
       ? ProcessedConfig<T[K]>
-      : State<Exclude<T[K], undefined>>
+      : State<T[K]> // TODO: when is this branch met?
 }
-
-// TODO: check for correctness and replace ProcessedConfig with this:
-// type Required<T> = Exclude<T, undefined>
-// export type SimplifiedProcessedConfig<T> = {
-//   [K in keyof T]: [Required<T[K]>] extends [Value<infer U>]
-//     ? Signal<Exclude<Required<U>, Fn<U> | Signal<U>>>
-//     : Required<T[K]> extends object
-//       ? SimplifiedProcessedConfig<T[K]>
-//       : Signal<Required<T[K]>>
-// }

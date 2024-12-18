@@ -12,4 +12,4 @@ export type {
 export * from './TemplateRenderer'
 export * from './utils'
 export * from './registry'
-export * from './threads'
+export * from './threads/index'

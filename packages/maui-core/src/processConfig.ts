@@ -1,4 +1,3 @@
-// import { ProcessedConfig } from './types'
 import { withCache } from './cache'
 import { $computed } from './threads/signals'
 import { IS_SIGNAL, ProcessedConfig, Schema } from './types'
@@ -22,6 +21,7 @@ function processConfigInternal<T extends Schema<string>, P extends Schema<T['sch
 }
 
 function evaluateExpressionsToSignals(configValue: any): any {
+  // TODO: better typing
   if (typeof configValue === 'function') {
     if ((configValue as any)[IS_SIGNAL]) {
       // **configValue is a signal getter, use it directly**
@@ -41,6 +41,7 @@ function evaluateExpressionsToSignals(configValue: any): any {
     }
     return evaluatedObject
   } else {
+    // primitives; TODO: return full State object instead of just returning getter
     return () => configValue
   }
 }

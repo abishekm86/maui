@@ -1,15 +1,7 @@
-import { Color, Greeting, Listing } from 'ds'
-import {
-  $action,
-  $async, // $computed,
-  // $collection,
-  // $if,
-  $invoke,
-  $state,
-  Config,
-  ConfigRegistry,
-  Value,
-} from 'maui-core'
+import { Color, Greeting } from 'ds'
+import { $await, $invoke, $state, Config, ConfigRegistry } from 'maui-core'
+
+import { mockAsyncApiFetch } from './helpers'
 
 const Blue: Config<Color.v1> = {
   schema: 'color@1',
@@ -26,7 +18,6 @@ const Grey: Config<Color.v2> = {
 
 const Red: Config<Color.v2> = {
   schema: 'color@2',
-
   configFn: () => {
     const color = '#aa3333'
     const getColorText = (color: string) => (color === '#aa3333' ? 'red' : '-')
@@ -40,76 +31,82 @@ const Red: Config<Color.v2> = {
   },
 }
 
-// TODO: typings don't allow primitives in AsyncValue
-// const One: Config<Greeting.v1> = {
-//   schema: 'greeting@1',
-//   configFn: () => ({
-//     message: {
-//       value: '1',
-//     },
-//   }),
-// }
-
-const Two: Config<Greeting.v1> = {
+const Hello: Config<Greeting.v1> = {
   schema: 'greeting@1',
   configFn: () => ({
     message: {
-      value: () => '2',
+      value: () => 'hello, world',
     },
   }),
 }
 
-const Hello: Config<Greeting.v1> = {
+const Shopping: Config<Greeting.v1> = {
   schema: 'greeting@1',
   configFn: () => {
     const getName = (
       id: number,
       abortSignal: AbortSignal,
-    ): Promise<{ firstName: string; lastName: string } | undefined> => {
-      const names = [
-        { firstName: 'Eleanor', lastName: 'Vance' },
-        { firstName: 'Caleb', lastName: "O'Connell" },
-        { firstName: 'Isabelle', lastName: 'Rodriguez' },
-        { firstName: 'Jasper', lastName: 'Nguyen' },
-        { firstName: 'Aurora', lastName: 'Harrison' },
+    ): Promise<{ firstName: string; lastName: string; cartId: number } | undefined> => {
+      const data = [
+        { firstName: 'Eleanor', lastName: 'Vance', cartId: 0 },
+        { firstName: 'Caleb', lastName: "O'Connell", cartId: 1 },
+        { firstName: 'Isabelle', lastName: 'Rodriguez', cartId: 2 },
+        { firstName: 'Jasper', lastName: 'Nguyen', cartId: 3 },
+        { firstName: 'Aurora', lastName: 'Harrison', cartId: 4 },
       ]
-
-      return new Promise<{ firstName: string; lastName: string } | undefined>((resolve, reject) => {
-        setTimeout(() => {
-          // Remove the abort listener after the timeout completes to prevent memory leaks
-          if (abortSignal.aborted) {
-            console.log('Operation aborted before completion')
-            reject(new DOMException('Aborted', 'AbortError'))
-            return // Important to prevent further execution
-          }
-          console.log('Called api with', id)
-          if (id < names.length) {
-            resolve(names[id])
-          } else {
-            resolve(undefined)
-          }
-        }, 400)
-      })
+      return mockAsyncApiFetch(data, id, abortSignal, 'Called getName api with user id:')
     }
 
-    const greetings = ['Hi', 'Aloha', 'Boujour', 'Vanakkam', 'Hola']
-    const ids = [0, 1, 2, 3, 4]
+    const getCart = (
+      id: number,
+      abortSignal: AbortSignal,
+    ): Promise<{ id: number; numItems: number } | undefined> => {
+      const data = [
+        { id: 0, numItems: 0 },
+        { id: 1, numItems: 1 },
+        { id: 2, numItems: 2 },
+        { id: 3, numItems: 3 },
+        { id: 4, numItems: 4 },
+      ]
+      return mockAsyncApiFetch(data, id, abortSignal, 'Called getCarts api with cart id:', 1000)
+    }
 
-    const [greetingId, setGreetingId] = $state(0)
-    const greeting = greetingId.then(id => greetings[id]).then(g => g.toUpperCase())
+    const userIds = [0, 1, 2, 3, 4]
+    const [userId, setId] = $state(userIds[0])
 
-    const [id, setId] = $state(ids[0])
-    const [response, refreshApi] = $async(abort => getName(id(), abort))
-    const message = response
-      .then(v => `${v?.firstName} ${v?.lastName}`)
-      .then(fullName => `${greeting()}, ${fullName}`)
+    // top level api call
+    const userResponse = $await(abort => getName(userId(), abort)).transform(response => ({
+      ...response,
+      fullName: response ? `${response?.firstName} ${response?.lastName}` : undefined, // TODO: use $if to filter undefineds
+    }))
 
-    const updateInputs = $action(() => {
-      setGreetingId((greetingId() + 1) % 5)
-      setId(ids[Math.floor(Math.random() * 5)])
+    // chained api
+    const cartResponse = userResponse.value.await(async (user, abort) => {
+      const cartId = user.cartId
+      return cartId !== undefined ? getCart(cartId, abort) : undefined // TODO: support filters to ignore undefined responses
     })
-    $invoke(updateInputs, { interval: 4500 })
-    $invoke(refreshApi, { interval: 1000 })
+
+    // join
+    const message = userResponse
+      .transform(user => {
+        // TODO: support join
+        const cart = cartResponse.value()
+        if (cart && user.cartId === cart.id) return { user, cart }
+        else return { user, cart: undefined }
+      })
+      .transform(({ user, cart }) => {
+        if (user.fullName) {
+          const cartMessage = cart
+            ? `You have ${cart.numItems} items in your cart!`
+            : 'Your cart is loading...'
+          return `Hi, ${user.fullName}. ${cartMessage}`
+        } else {
+          return `Please wait...`
+        }
+      })
+
+    $invoke(() => setId((userId() + 1) % 5), { interval: 9000 }) // simulate user filter
+    $invoke(userResponse.refresh, { interval: 3000 }) // refresh data periodically
 
     return {
       message,
@@ -117,71 +114,71 @@ const Hello: Config<Greeting.v1> = {
   },
 }
 
-const ListingExample: Config<Listing.v1> = {
-  schema: 'listing@1',
-  configFn: () => {
-    type Api = { id: number; name: string; value: number }
+// const ListingExample: Config<Listing.v1> = {
+//   schema: 'listing@1',
+//   configFn: () => {
+//     type Api = { id: number; name: string; value: number }
 
-    const mockApi = (() => {
-      const items: Api[] = []
-      let updateItem: () => void
-      let firstRun = true
+//     const mockApi = (() => {
+//       const items: Api[] = []
+//       let updateItem: () => void
+//       let firstRun = true
 
-      setTimeout(() => {
-        console.log('Updating')
-        updateItem()
-      }, 8000)
+//       setTimeout(() => {
+//         console.log('Updating')
+//         updateItem()
+//       }, 8000)
 
-      return {
-        list: async () =>
-          new Promise<Value<Api>[]>(resolve => {
-            setTimeout(() => {
-              if (firstRun) {
-                for (let i = 0; i < 25; i++) {
-                  const newItem = {
-                    id: items.length + 1,
-                    name: `Item ${items.length + 1}`,
-                    value: Math.floor(Math.random() * 1000),
-                  }
-                  items.push(newItem)
-                }
-              } else {
-                if (Math.random() < 0.5) {
-                  const newItem = {
-                    id: items.length + 1,
-                    name: `Item ${items.length + 1}`,
-                    value: Math.floor(Math.random() * 1000),
-                  }
-                  items.push(newItem)
-                }
-              }
-              firstRun = false
-              resolve(
-                items.map((item, id) => {
-                  const [getItem, setItem] = $state(item)
-                  if (id === 20) updateItem = () => setItem({ ...getItem(), value: 424242 })
-                  return getItem
-                }),
-              )
-            }, 500)
-          }),
-      }
-    })()
+//       return {
+//         list: async () =>
+//           new Promise<Value<Api>[]>(resolve => {
+//             setTimeout(() => {
+//               if (firstRun) {
+//                 for (let i = 0; i < 25; i++) {
+//                   const newItem = {
+//                     id: items.length + 1,
+//                     name: `Item ${items.length + 1}`,
+//                     value: Math.floor(Math.random() * 1000),
+//                   }
+//                   items.push(newItem)
+//                 }
+//               } else {
+//                 if (Math.random() < 0.5) {
+//                   const newItem = {
+//                     id: items.length + 1,
+//                     name: `Item ${items.length + 1}`,
+//                     value: Math.floor(Math.random() * 1000),
+//                   }
+//                   items.push(newItem)
+//                 }
+//               }
+//               firstRun = false
+//               resolve(
+//                 items.map((item, id) => {
+//                   const [getItem, setItem] = $state(item)
+//                   if (id === 20) updateItem = () => setItem({ ...getItem(), value: 424242 })
+//                   return getItem
+//                 }),
+//               )
+//             }, 500)
+//           }),
+//       }
+//     })()
 
-    const [response, apiTrigger] = $async(() => mockApi.list())
-    const stop = $invoke(apiTrigger, { interval: 1000 })
-    $invoke(stop, { delay: 60 * 1000 })
+//     const [response, apiTrigger] = $async(() => mockApi.list())
+//     const stop = $invoke(apiTrigger, { interval: 1000 })
+//     $invoke(stop, { delay: 60 * 1000 })
 
-    return {
-      items: response,
-      columns: [
-        { name: 'id', label: 'ID', cell: 'Foo' },
-        { name: 'name', label: 'Name' },
-        { name: 'value', label: 'Value' },
-      ],
-    }
-  },
-}
+//     return {
+//       items: response,
+//       columns: [
+//         { name: 'id', label: 'ID', cell: 'Foo' },
+//         { name: 'name', label: 'Name' },
+//         { name: 'value', label: 'Value' },
+//       ],
+//     }
+//   },
+// }
 
 // const a = { value: 1, id: 1 }
 // const b = { value: 2, id: 2 }
@@ -200,8 +197,7 @@ export const configRegistry: ConfigRegistry = {
   blue: Blue,
   grey: Grey,
   red: Red,
-  // one: One,
-  two: Two,
   hello: Hello,
-  list: ListingExample,
+  shopping: Shopping,
+  // list: ListingExample,
 }

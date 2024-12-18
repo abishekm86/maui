@@ -1,10 +1,8 @@
 import { batch, computed, signal } from '@preact/signals'
 
-import { ChainableAsyncState } from '../types'
+import { AsyncFn, ChainableAsyncState } from '../types'
 import { $computed } from './signals'
-import { Trigger, addAsyncChainMethods, createTrigger } from './utils'
-
-type AsyncFn<T> = (signal: AbortSignal) => Promise<T>
+import { addAsyncChainMethods, createTrigger } from './utils'
 
 /**
  * Async computation: does not run the computation until the state is read. Once read, it runs the computation.
@@ -12,9 +10,9 @@ type AsyncFn<T> = (signal: AbortSignal) => Promise<T>
  * @param {AsyncFn<T>} fn - The function to compute asynchronously.
  * @returns {[AsyncState<T>, Trigger]} A tuple of the async state and a trigger to refresh.
  */
-export function $async<T>(fn: AsyncFn<T>): [ChainableAsyncState<T>, Trigger] {
+export function $await<T>(fn: AsyncFn<T>): ChainableAsyncState<T | undefined> {
   const valueSignal = signal<T | undefined>(undefined)
-  const errorSignal = signal<Error | null | undefined>(undefined)
+  const errorSignal = signal<Error | null>(null)
   const loadingSignal = signal(true)
   const refreshingSignal = signal(false)
   // TODO: add last updated time & reloading state
@@ -27,7 +25,7 @@ export function $async<T>(fn: AsyncFn<T>): [ChainableAsyncState<T>, Trigger] {
 
   const lazyRunner = computed(() => {
     if (loadingSignal.peek()) {
-      // disallow refreshes while in loading state
+      // ignore refreshes while in loading state
       if (triggerSignal.value !== lastTrigger) {
         lastTrigger = triggerSignal.value
         return
@@ -92,12 +90,13 @@ export function $async<T>(fn: AsyncFn<T>): [ChainableAsyncState<T>, Trigger] {
     return refreshingSignal.value
   })
 
-  const asyncState = addAsyncChainMethods({
+  const asyncState = addAsyncChainMethods<T | undefined>({
     value: finalValue,
     error: finalError,
     loading: finalLoading,
     refreshing: finalRefreshing,
+    refresh: trigger,
   })
 
-  return [addAsyncChainMethods(asyncState), trigger]
+  return addAsyncChainMethods(asyncState)
 }
